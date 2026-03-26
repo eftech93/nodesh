@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: node-console-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: nodeconsole
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - node-console-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: node-console-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - node-console-network
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    platform: linux/amd64
+    container_name: node-console-redis-commander
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - node-console-network
+    depends_on:
+      - redis
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  node-console-network:
+    driver: bridge

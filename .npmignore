@@ -1,0 +1,39 @@
+# Source control
+.git/
+.gitignore
+
+# Source files (we publish dist/)
+src/
+tsconfig.json
+
+# Testing
+test/
+tests/
+*.test.ts
+*.spec.ts
+coverage/
+.nyc_output/
+
+# Development
+.github/
+.eslintrc
+.prettierrc
+jest.config.js
+
+# Documentation (keep README.md)
+docs/
+
+# Examples
+example/
+example-nestjs/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build info
+*.tsbuildinfo
