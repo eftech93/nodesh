@@ -1,6 +1,6 @@
 # NodeSH
 
-A Rails-like interactive shell for Node.js applications. Works with **Express**, **NestJS**, and any Node.js framework. Load your entire app context—models, services, configs, databases—and interact with them in a REPL with autocompletion.
+An interactive shell for Node.js applications. Works with **Express**, **NestJS**, and any Node.js framework. Load your entire app context—models, services, configs, databases—and interact with them in a REPL with autocompletion.
 
 Built with TypeScript for full type safety.
 
@@ -27,6 +27,17 @@ Built with TypeScript for full type safety.
 - 📜 **Command History** - Persistent history across sessions
 - 🔷 **Full TypeScript Support** - Written in TypeScript, includes type definitions
 - 🔧 **Customizable** - Configure via `.nodesh.js` or `package.json`
+- 🗄️ **Multi-Database Support** - 7+ databases supported:
+  - 🍃 **MongoDB** (Mongoose)
+  - 🐘 **PostgreSQL** (pg)
+  - 🐬 **MySQL** (mysql2)
+  - ⚡ **Redis** (ioredis)
+  - 📊 **Prisma** (Universal ORM)
+  - 🕸️ **Neo4j** (Graph Database)
+  - 📦 **DynamoDB** (AWS)
+- 🌐 **API Client** - Built-in HTTP client for testing external and local APIs
+- 📬 **Queue Management** - Full BullMQ/Bull queue control (pause, resume, retry, clean)
+- 🧪 **Testing Helpers** - API testing, seeding, timing utilities built-in
 
 ## Installation
 
@@ -92,6 +103,10 @@ node> await cacheService.getStats()
 
 // View queues
 node> await queueService.getAllStatuses()
+
+// Make HTTP requests
+node> await apiService.get('https://api.example.com/users')
+node> await apiService.local('GET', '/users')
 
 // Reload after code changes
 node> .reload
@@ -184,6 +199,216 @@ Options:
   -y, --yes               Auto-generate config if not found
   -h, --help              Display help
   -V, --version           Display version
+```
+
+## Library Features
+
+### 🗄️ Multi-Database Support
+
+NodeSH includes a **unified database connection manager** supporting 7+ databases with automatic detection from environment variables:
+
+| Database | Type | Adapter | Environment Variable |
+|----------|------|---------|---------------------|
+| 🍃 MongoDB | Document | mongoose | `MONGODB_URI` |
+| 🐘 PostgreSQL | Relational | pg | `DATABASE_URL` or `PGHOST` |
+| 🐬 MySQL | Relational | mysql2 | `DATABASE_URL` or `MYSQL_HOST` |
+| ⚡ Redis | Key-Value | ioredis | `REDIS_URL` or `REDIS_HOST` |
+| 📊 Prisma | Universal ORM | @prisma/client | `DATABASE_URL` |
+| 🕸️ Neo4j | Graph | neo4j-driver | `NEO4J_URI` |
+| 📦 DynamoDB | NoSQL | aws-sdk | `AWS_REGION` |
+
+**Quick Start:**
+
+```javascript
+const { initDatabases, getConnectionManager } = require('@eftech93/nodesh');
+
+// Auto-detect and connect all configured databases
+const { manager, helpers } = await initDatabases();
+
+// Access any connection
+const mongo = manager.get('mongodb');
+const postgres = manager.get('postgresql');
+const redis = manager.get('redis');
+const neo4j = manager.get('neo4j');
+const dynamo = manager.get('dynamodb');
+const prisma = manager.get('prisma');
+
+// Get stats for all databases
+await helpers.getDBStats();
+```
+
+**In the NodeSH Shell:**
+
+```javascript
+// MongoDB operations
+node> await User.find({ isActive: true })
+node> await User.countDocuments()
+
+// Redis operations  
+node> await cacheService.get('user:123')
+node> await cacheService.set('user:123', user, 3600)
+
+// PostgreSQL queries
+node> const result = await pg.query('SELECT * FROM users WHERE active = $1', [true])
+```
+
+See [Database Guide](https://eftech93.github.io/nodesh/#/guides/database) for detailed configuration.
+
+### Testing Helpers
+
+Built-in utilities for testing and debugging:
+
+```javascript
+// Timing operations
+const { run, measure, batch } = require('@eftech93/nodesh');
+
+await run(() => User.find(), 'Find all users');
+const { result, duration } = await measure(() => heavyOperation());
+
+// Run multiple operations
+await batch([
+  () => User.findById('1'),
+  () => User.findById('2'),
+  () => User.findById('3'),
+]);
+```
+
+### API Testing
+
+Test API routes directly in the console:
+
+```javascript
+const { http, ApiTester, debugApi } = require('@eftech93/nodesh');
+
+// Simple HTTP calls
+await http.get('/api/users');
+await http.post('/api/users', { name: 'John', email: 'john@example.com' });
+
+// Using ApiTester class
+const api = new ApiTester('http://localhost:3000/api');
+await api.get('/users', { page: '1', limit: '10' });
+
+// Debug API calls step-by-step
+await debugApi('/api/users/123', 'GET');
+```
+
+### Database Seeding
+
+Built-in seeding utilities:
+
+```javascript
+const { seed, seedUsers, clear, showStats } = require('@eftech93/nodesh');
+
+// Generic seeding
+await seed({
+  count: 100,
+  create: (i) => User.create({ name: `User ${i}`, email: `user${i}@test.com` }),
+  batchSize: 10,
+});
+
+// User seeding with fake data
+await seedUsers({
+  count: 50,
+  create: (data) => User.create(data),
+  roles: ['user', 'admin'],
+});
+
+// Show database stats
+await showStats({
+  users: () => User.countDocuments(),
+  orders: () => Order.countDocuments(),
+});
+
+// Clear all data
+await clear([
+  () => User.deleteMany({}),
+  () => Order.deleteMany({}),
+]);
+```
+
+### Formatting Utilities
+
+```javascript
+const { formatTable, formatBytes, formatDuration } = require('@eftech93/nodesh');
+
+// Format as table
+console.log(formatTable([
+  { name: 'User', count: 100 },
+  { name: 'Order', count: 500 },
+]));
+
+// Format bytes
+formatBytes(1024);        // "1 KB"
+formatBytes(1048576);     // "1 MB"
+
+// Format duration
+formatDuration(500);      // "500ms"
+formatDuration(5000);     // "5.00s"
+formatDuration(120000);   // "2m 0.00s"
+```
+
+### 🌐 API Client
+
+Built-in HTTP client for testing APIs directly in the console:
+
+```javascript
+// Configure base URL
+apiService.setBaseURL('https://api.example.com')
+
+// Make HTTP requests
+const users = await apiService.get('/users')
+const user = await apiService.get('/users/1')
+const newUser = await apiService.post('/users', { name: 'John', email: 'john@example.com' })
+const updated = await apiService.put('/users/1', { name: 'Jane' })
+const deleted = await apiService.delete('/users/1')
+
+// Test connectivity
+const ping = await apiService.ping('https://api.example.com/health')
+// => { success: true, latency: 45, status: 200 }
+
+// Call your own API (auto-uses localhost:3000)
+const localUsers = await apiService.local('GET', '/users')
+const newOrder = await apiService.local('POST', '/orders', { productId: '123', quantity: 2 })
+```
+
+### 📬 Queue Management
+
+Full queue control for BullMQ/Bull queues:
+
+```javascript
+// Get all queue statuses
+await queueDashboardController.getAllQueueStatuses()
+
+// Pause/Resume queues
+await queueDashboardController.pauseQueue('email')
+await queueDashboardController.resumeQueue('email')
+
+// Get jobs with status filtering
+await queueDashboardController.getJobs('email', 'failed')
+await queueDashboardController.getJobs('email', 'waiting', 0, 19)
+
+// Retry failed jobs
+await queueDashboardController.retryJob('email', 'job-id-123')
+
+// Retry all failed jobs
+const failed = await queueDashboardController.getJobs('email', 'failed')
+for (const job of failed) {
+  await queueDashboardController.retryJob('email', job.id)
+}
+
+// Clean old jobs
+await queueDashboardController.cleanQueue('email', 'completed', 100)
+
+// Schedule job for future
+await queueDashboardController.scheduleJob(
+  'email',
+  'send-welcome',
+  { to: 'user@example.com' },
+  new Date(Date.now() + 60000)  // 1 minute from now
+)
+
+// Get queue metrics
+await queueDashboardController.getQueueMetrics('email')
 ```
 
 ## Examples
@@ -479,7 +704,7 @@ docker-compose down
 
 ## Inspired By
 
-- [Rails Console](https://guides.rubyonrails.org/command_line.html#bin-rails-console)
+- [Django Shell](https://docs.djangoproject.com/en/stable/ref/django-admin/#shell)
 - [Django Shell](https://docs.djangoproject.com/en/stable/ref/django-admin/#shell)
 - [Laravel Tinker](https://github.com/laravel/tinker)
 

@@ -8,8 +8,14 @@ import { OrdersModule } from './orders/orders.module';
 import { ProductsModule } from './products/products.module';
 import { QueuesModule } from './queues/queues.module';
 import { CacheModule } from './cache/cache.module';
+import { PostgresModule } from './postgres/postgres.module';
+import { MysqlModule } from './mysql/mysql.module';
+import { Neo4jModule } from './neo4j/neo4j.module';
+import { DynamodbModule } from './dynamodb/dynamodb.module';
+import { ApiModule } from './api/api.module';
 import { HealthController } from './health.controller';
 import { DashboardController } from './dashboard.controller';
+import { DatabaseDashboardController } from './database-dashboard.controller';
 
 @Module({
   imports: [
@@ -38,13 +44,22 @@ import { DashboardController } from './dashboard.controller';
       inject: [ConfigService],
     }),
     
+    // Core modules (import before feature modules that depend on them)
+    ApiModule,
+    QueuesModule,
+    CacheModule,
+    
     // Feature modules
     UsersModule,
     OrdersModule,
     ProductsModule,
-    QueuesModule,
-    CacheModule,
+    
+    // Additional Database Modules
+    PostgresModule,
+    MysqlModule,
+    Neo4jModule,
+    DynamodbModule,
   ],
-  controllers: [HealthController, DashboardController],
+  controllers: [HealthController, DashboardController, DatabaseDashboardController],
 })
 export class AppModule {}

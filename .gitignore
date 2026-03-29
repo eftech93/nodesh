@@ -27,6 +27,10 @@ yarn-error.log*
 coverage/
 .nyc_output/
 
+# Allow docs coverage and test report (for GitHub Pages)
+!docs/coverage/
+!docs/test-report.md
+
 # IDE
 .vscode/
 .idea/
@@ -37,3 +41,5 @@ coverage/
 # OS
 .DS_Store
 Thumbs.db
+
+**/.next/

@@ -22,9 +22,9 @@ function removeTempDir(tempDir: string): void {
 
 describe('CONFIG_FILES', () => {
   it('should include expected config file names', () => {
-    expect(CONFIG_FILES).toContain('.node-console.js');
-    expect(CONFIG_FILES).toContain('.node-console.json');
-    expect(CONFIG_FILES).toContain('node-console.config.js');
+    expect(CONFIG_FILES).toContain('.nodesh.js');
+    expect(CONFIG_FILES).toContain('.nodesh.json');
+    expect(CONFIG_FILES).toContain('nodesh.config.js');
   });
 });
 
@@ -55,7 +55,7 @@ describe('loadConfig', () => {
     expect(config.context).toEqual({});
   });
 
-  it('should load config from .node-console.js', () => {
+  it('should load config from .nodesh.js', () => {
     const configContent = `
       module.exports = {
         appEntry: 'src/app.js',
@@ -65,7 +65,7 @@ describe('loadConfig', () => {
         useColors: false
       };
     `;
-    fs.writeFileSync(path.join(tempDir, '.node-console.js'), configContent);
+    fs.writeFileSync(path.join(tempDir, '.nodesh.js'), configContent);
     
     const config = loadConfig(tempDir);
     
@@ -76,14 +76,14 @@ describe('loadConfig', () => {
     expect(config.useColors).toBe(false);
   });
 
-  it('should load config from .node-console.json', () => {
+  it('should load config from .nodesh.json', () => {
     const configContent = {
       appEntry: 'src/server.js',
       modelsDir: 'app/models',
       prompt: 'json> '
     };
     fs.writeFileSync(
-      path.join(tempDir, '.node-console.json'),
+      path.join(tempDir, '.nodesh.json'),
       JSON.stringify(configContent, null, 2)
     );
     
@@ -94,11 +94,11 @@ describe('loadConfig', () => {
     expect(config.prompt).toBe('json> ');
   });
 
-  it('should load config from package.json nodeConsole field', () => {
+  it('should load config from package.json nodesh field', () => {
     const packageContent = {
       name: 'test-app',
       version: '1.0.0',
-      nodeConsole: {
+      nodesh: {
         appEntry: 'dist/main.js',
         modelsDir: 'dist/models',
         prompt: 'pkg> '
@@ -124,7 +124,7 @@ describe('loadConfig', () => {
         prompt: 'config> '
       };
     `;
-    fs.writeFileSync(path.join(tempDir, '.node-console.js'), configContent);
+    fs.writeFileSync(path.join(tempDir, '.nodesh.js'), configContent);
     
     const packageContent = {
       name: 'test-app',
@@ -156,9 +156,9 @@ describe('loadConfig', () => {
       appEntry: 'second.js'
     };
     
-    fs.writeFileSync(path.join(tempDir, '.node-console.js'), jsConfig);
+    fs.writeFileSync(path.join(tempDir, '.nodesh.js'), jsConfig);
     fs.writeFileSync(
-      path.join(tempDir, '.node-console.json'),
+      path.join(tempDir, '.nodesh.json'),
       JSON.stringify(jsonConfig)
     );
     
@@ -174,7 +174,7 @@ describe('loadConfig', () => {
         invalid syntax here
       };
     `;
-    fs.writeFileSync(path.join(tempDir, '.node-console.js'), invalidConfig);
+    fs.writeFileSync(path.join(tempDir, '.nodesh.js'), invalidConfig);
     
     const consoleWarn = jest.spyOn(console, 'warn').mockImplementation();
     
@@ -212,7 +212,7 @@ describe('loadConfig', () => {
         // Other values should use defaults
       };
     `;
-    fs.writeFileSync(path.join(tempDir, '.node-console.js'), configContent);
+    fs.writeFileSync(path.join(tempDir, '.nodesh.js'), configContent);
     
     const config = loadConfig(tempDir);
     
@@ -249,24 +249,24 @@ describe('generateConfig', () => {
     const result = generateConfig(tempDir);
     
     expect(result.created).toBe(true);
-    expect(result.path).toBe(path.join(tempDir, '.node-console.js'));
+    expect(result.path).toBe(path.join(tempDir, '.nodesh.js'));
     expect(fs.existsSync(result.path)).toBe(true);
   });
 
   it('should not overwrite existing config file', () => {
     // Create existing config
-    fs.writeFileSync(path.join(tempDir, '.node-console.js'), 'module.exports = {};');
+    fs.writeFileSync(path.join(tempDir, '.nodesh.js'), 'module.exports = {};');
     
     const result = generateConfig(tempDir);
     
     expect(result.created).toBe(false);
-    expect(result.path).toBe(path.join(tempDir, '.node-console.js'));
+    expect(result.path).toBe(path.join(tempDir, '.nodesh.js'));
   });
 
   it('should generate valid JavaScript config', () => {
     generateConfig(tempDir);
     
-    const configPath = path.join(tempDir, '.node-console.js');
+    const configPath = path.join(tempDir, '.nodesh.js');
     const content = fs.readFileSync(configPath, 'utf8');
     
     expect(content).toContain('module.exports');
@@ -279,10 +279,10 @@ describe('generateConfig', () => {
   it('should generate config with helpful comments', () => {
     generateConfig(tempDir);
     
-    const configPath = path.join(tempDir, '.node-console.js');
+    const configPath = path.join(tempDir, '.nodesh.js');
     const content = fs.readFileSync(configPath, 'utf8');
     
-    expect(content).toContain('Node Console Configuration');
+    expect(content).toContain('NodeSH Configuration');
     expect(content).toContain('Path to your app entry file');
   });
 
@@ -292,7 +292,7 @@ describe('generateConfig', () => {
     
     const result = generateConfig();
     
-    expect(result.path).toBe(path.join(tempDir, '.node-console.js'));
+    expect(result.path).toBe(path.join(tempDir, '.nodesh.js'));
     
     process.cwd = originalCwd;
   });

@@ -1,5 +1,5 @@
 /**
- * Express Console - Rails-like console for Express.js
+ * Express Console - Interactive console for Express.js
  * Provides an interactive REPL with autocompletion and app context
  */
 import * as repl from 'repl';
@@ -10,6 +10,7 @@ import { REPLServer } from 'repl';
 import chalk from 'chalk';
 import { AppLoader } from './loader';
 import { NestJSLoader } from './nestjs-loader';
+import { NextJSLoader } from './nextjs-loader';
 import { 
   ExpressConsoleOptions, 
   LoadedContext, 
@@ -20,7 +21,7 @@ import { IntelligentCompleter, addIntrospectionMethods } from './autocomplete';
 
 // Extend REPLServer interface for our custom properties
 interface ExtendedREPLServer extends REPLServer {
-  loader?: AppLoader | NestJSLoader;
+  loader?: AppLoader | NestJSLoader | NextJSLoader;
   replServer?: ExtendedREPLServer;
   outputWriter?: (output: unknown) => string;
   printBanner?: () => void;
@@ -28,7 +29,7 @@ interface ExtendedREPLServer extends REPLServer {
 
 export class ExpressConsole {
   public options: Required<ExpressConsoleOptions> & { forceExpress?: boolean };
-  public loader: AppLoader | NestJSLoader;
+  public loader: AppLoader | NestJSLoader | NextJSLoader;
   public context: LoadedContext;
   public replServer: ExtendedREPLServer | null;
 
@@ -38,7 +39,7 @@ export class ExpressConsole {
       prompt: options.prompt || 'node> ',
       useColors: options.useColors !== false,
       useGlobal: options.useGlobal !== false,
-      historyFile: options.historyFile || path.join(os.homedir(), '.node_console_history'),
+      historyFile: options.historyFile || path.join(os.homedir(), '.nodesh_history'),
       preload: options.preload || [],
       context: options.context || {},
       appEntry: options.appEntry,
@@ -65,12 +66,25 @@ export class ExpressConsole {
     // Show banner
     this.printBanner();
     
-    // Detect NestJS and use appropriate loader
-    const isNestJS = !this.options.forceExpress && 
-      NestJSLoader.isNestJSProject(this.options.rootPath);
+    // Detect framework and use appropriate loader
+    let framework: 'express' | 'nestjs' | 'nextjs' = 'express';
     
-    if (isNestJS) {
+    if (!this.options.forceExpress) {
+      if (NestJSLoader.isNestJSProject(this.options.rootPath)) {
+        framework = 'nestjs';
+      } else if (NextJSLoader.isNextJSProject(this.options.rootPath)) {
+        framework = 'nextjs';
+      }
+    }
+    
+    // Use appropriate loader
+    if (framework === 'nestjs') {
       this.loader = new NestJSLoader({
+        rootPath: this.options.rootPath,
+        config: this.options
+      });
+    } else if (framework === 'nextjs') {
+      this.loader = new NextJSLoader({
         rootPath: this.options.rootPath,
         config: this.options
       });
@@ -129,8 +143,8 @@ export class ExpressConsole {
     const banner = [
       '',
       chalk.bold.cyan('╔════════════════════════════════════════╗'),
-      chalk.bold.cyan('║       Node Console (ncon)              ║'),
-      chalk.bold.cyan('║   Rails-like REPL for Node.js apps     ║'),
+      chalk.bold.cyan('║           NodeSH (nodesh)              ║'),
+      chalk.bold.cyan('║    Interactive shell for Node.js apps  ║'),
       chalk.bold.cyan('╚════════════════════════════════════════╝'),
       ''
     ].join('\n');
@@ -210,7 +224,7 @@ export class ExpressConsole {
   setupHistory(): void {
     if (!this.replServer) return;
     
-    const historyFile = this.options.historyFile || path.join(os.homedir(), '.express_console_history');
+    const historyFile = this.options.historyFile || path.join(os.homedir(), '.nodesh_history');
 
     try {
       // Load existing history
@@ -472,7 +486,7 @@ export class ExpressConsole {
     const helpCommand: ConsoleCommand = {
       help: 'Show this help message',
       action: function(this: REPLServer) {
-        console.log(chalk.bold('\nExpress Console Commands:'));
+        console.log(chalk.bold('\nNodeSH Commands:'));
         console.log(chalk.gray('─'.repeat(50)));
         console.log(`${chalk.cyan('.reload')}    - Reload all application files`);
         console.log(`${chalk.cyan('.routes')}    - List all Express routes`);

@@ -1,5 +1,5 @@
 /**
- * Application loader - loads models, services, configs like Rails
+ * Application loader - loads models, services, and configs
  */
 import * as fs from 'fs';
 import * as path from 'path';
@@ -115,7 +115,7 @@ export class AppLoader {
   async loadModels(): Promise<void> {
     const modelsDir = path.join(this.rootPath, this.config?.modelsDir || 'models');
     
-    // Also look for model files in app/models (Rails-like structure)
+    // Also look for model files in app/models
     const altModelsDir = path.join(this.rootPath, 'app', 'models');
     const dirsToLoad: string[] = [];
     

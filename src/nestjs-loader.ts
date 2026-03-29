@@ -361,7 +361,7 @@ export class NestJSLoader {
             const absolutePath = path.resolve(fullPath);
             delete require.cache[require.resolve(absolutePath)];
             const module = require(absolutePath);
-            const Entity = module.default || Object.values(module)[0];
+            const Entity = module.default || Object.values(module)[0] || module;
             
             if (Entity && typeof Entity === 'function' && 'name' in Entity) {
               (this.context as Record<string, unknown>)[Entity.name] = Entity;
@@ -417,7 +417,8 @@ export class NestJSLoader {
             
             // Get the exported class
             const ExportClass = module.default || 
-              Object.values(module).find((v): v is new () => unknown => typeof v === 'function');
+              Object.values(module).find((v): v is new () => unknown => typeof v === 'function') ||
+              (typeof module === 'function' ? module : null);
 
             if (ExportClass) {
               const name = (ExportClass as { name?: string }).name || path.basename(file, path.extname(file));
@@ -461,7 +462,8 @@ export class NestJSLoader {
           const module = require(absolutePath);
           
           const ExportClass = module.default || 
-            Object.values(module).find((v): v is new () => unknown => typeof v === 'function');
+            Object.values(module).find((v): v is new () => unknown => typeof v === 'function') ||
+            (typeof module === 'function' ? module : null);
 
           if (ExportClass) {
             const name = (ExportClass as { name?: string }).name || path.basename(file, path.extname(file));

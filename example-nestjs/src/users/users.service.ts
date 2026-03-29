@@ -13,6 +13,10 @@ export class UsersService {
     private readonly queuesService: QueuesService,
   ) {}
 
+  private toUserDocument(user: User | UserDocument | null): UserDocument | null {
+    return user as UserDocument | null;
+  }
+
   async create(createUserDto: any): Promise<User> {
     const user = new this.userModel(createUserDto);
     await user.save();
@@ -25,7 +29,7 @@ export class UsersService {
     await this.queuesService.addEmailJob({
       type: 'welcome',
       to: user.email,
-      name: user.fullName,
+      name: `${user.name.first} ${user.name.last}`,
     });
     
     return user;
@@ -99,15 +103,15 @@ export class UsersService {
   }
 
   async authenticate(email: string, password: string): Promise<User | null> {
-    const user = await this.findByEmail(email);
+    const userDoc = await (this.userModel as any).findByEmail(email).exec() as UserDocument | null;
     
-    if (!user || !user.isActive) return null;
+    if (!userDoc || !userDoc.isActive) return null;
     
-    const isValid = await user.comparePassword(password);
+    const isValid = await userDoc.comparePassword(password);
     if (!isValid) return null;
     
-    await user.recordLogin();
-    return user;
+    await userDoc.recordLogin();
+    return userDoc;
   }
 
   async getStats(): Promise<any> {

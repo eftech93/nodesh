@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # MongoDB - Document Database
   mongodb:
     image: mongo:7
     container_name: node-console-mongodb
@@ -16,6 +17,7 @@ services:
     networks:
       - node-console-network
 
+  # Redis - Key-Value Store
   redis:
     image: redis:7-alpine
     container_name: node-console-redis
@@ -27,6 +29,70 @@ services:
     networks:
       - node-console-network
 
+  # PostgreSQL - Relational Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: node-console-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: nodeconsole
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - node-console-network
+
+  # MySQL - Relational Database
+  mysql:
+    image: mysql:8.0
+    container_name: node-console-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: nodeconsole
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - node-console-network
+
+  # Neo4j - Graph Database
+  neo4j:
+    image: neo4j:5
+    container_name: node-console-neo4j
+    restart: unless-stopped
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/password
+      NEO4J_PLUGINS: '["apoc"]'
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    networks:
+      - node-console-network
+
+  # DynamoDB Local - NoSQL
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    container_name: node-console-dynamodb
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
+    volumes:
+      - dynamodb_data:/home/dynamodblocal/data
+    networks:
+      - node-console-network
+
+  # Database Management Tools
   redis-commander:
     image: rediscommander/redis-commander:latest
     platform: linux/amd64
@@ -41,9 +107,45 @@ services:
     depends_on:
       - redis
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: node-console-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: password
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8082:80"
+    networks:
+      - node-console-network
+    depends_on:
+      - postgres
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: node-console-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: admin
+      PMA_PASSWORD: password
+    ports:
+      - "8083:80"
+    networks:
+      - node-console-network
+    depends_on:
+      - mysql
+
 volumes:
   mongodb_data:
   redis_data:
+  postgres_data:
+  mysql_data:
+  neo4j_data:
+  neo4j_logs:
+  dynamodb_data:
 
 networks:
   node-console-network:

@@ -2,7 +2,12 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, HydratedDocument } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 
-export type UserDocument = HydratedDocument<User>;
+export type UserDocument = HydratedDocument<User> & UserMethods;
+
+export interface UserMethods {
+  comparePassword(candidatePassword: string): Promise<boolean>;
+  recordLogin(): Promise<UserDocument>;
+}
 
 @Schema({ timestamps: true })
 export class User extends Document {
@@ -35,27 +40,14 @@ export class User extends Document {
       notifications: boolean;
     };
   };
+
+  // Virtuals - declare as getter
+  get fullName(): string {
+    return `${this.name.first} ${this.name.last}`;
+  }
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-
-// Virtual for full name
-UserSchema.virtual('fullName').get(function() {
-  return `${this.name.first} ${this.name.last}`;
-});
-
-// Pre-save middleware
-UserSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (err) {
-    next(err);
-  }
-});
 
 // Instance methods
 UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {

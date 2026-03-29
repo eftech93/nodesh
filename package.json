@@ -1,7 +1,7 @@
 {
   "name": "@eftech93/nodesh",
   "version": "0.0.1",
-  "description": "Rails-like interactive shell for Node.js applications (Express, NestJS, etc.) with autocompletion",
+  "description": "Interactive shell for Node.js applications (Express, NestJS, etc.) with autocompletion",
   "keywords": [
     "nodejs",
     "express",
@@ -10,7 +10,6 @@
     "repl",
     "shell",
     "terminal",
-    "rails",
     "cli",
     "interactive",
     "autocomplete",
@@ -51,17 +50,29 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:report": "node scripts/generate-test-report.js",
     "lint": "eslint src/",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build",
     "release": "npm run build && npm test && npm publish --access public",
     "release:patch": "npm version patch && npm run release",
     "release:minor": "npm version minor && npm run release",
-    "release:major": "npm version major && npm run release"
+    "release:major": "npm version major && npm run release",
+    "link:global": "npm link",
+    "link:example": "cd example && npm link @eftech93/nodesh",
+    "link:example-nextjs": "cd example-nextjs && npm link @eftech93/nodesh",
+    "link:example-nestjs": "cd example-nestjs && npm link @eftech93/nodesh",
+    "relink": "npm run build && npm run link:global && npm run link:example && npm run link:example-nextjs && npm run link:example-nestjs",
+    "relink:nextjs": "npm run build && npm run link:global && cd example-nextjs && npm link @eftech93/nodesh",
+    "relink:nestjs": "npm run build && npm run link:global && cd example-nestjs && npm link @eftech93/nodesh",
+    "relink:force": "npm run build && npm run link:global && cd example && rm -rf node_modules/@eftech93 && npm link @eftech93/nodesh && cd ../example-nextjs && rm -rf node_modules/@eftech93 && npm link @eftech93/nodesh"
   },
   "dependencies": {
     "chalk": "^4.1.2",
-    "commander": "^9.4.1"
+    "commander": "^9.4.1",
+    "ts-node": "^10.9.0",
+    "tsconfig-paths": "^4.2.0"
   },
   "devDependencies": {
     "@nestjs/common": "^10.0.0",
@@ -71,9 +82,12 @@
     "@types/node": "^20.0.0",
     "express": "^4.18.2",
     "jest": "^29.0.0",
+
+    "next": "^16.2.1",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "xml2js": "^0.6.2"
   },
   "peerDependencies": {
     "@nestjs/common": "^8.0.0 || ^9.0.0 || ^10.0.0",

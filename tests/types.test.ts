@@ -1,225 +1,168 @@
 /**
- * Unit tests for Type definitions and interfaces
+ * Unit tests for TypeScript types
  */
 
-import { 
-  ExpressConsoleOptions, 
-  AppLoaderOptions, 
-  RouteInfo, 
+import {
+  ExpressConsoleOptions,
+  AppLoaderOptions,
   LoadedContext,
   ConfigResult,
+  RouteInfo,
+  ConsoleCommand,
   PropertyInfo,
-  ObjectMetadata
+  ObjectMetadata,
+  CompleterResult
 } from '../src/types';
 
-describe('Type Definitions', () => {
-  describe('ExpressConsoleOptions', () => {
-    it('should allow creating options with all fields', () => {
-      const options: ExpressConsoleOptions = {
-        rootPath: '/app',
-        appEntry: 'src/app.js',
-        modelsDir: 'src/models',
-        servicesDir: 'src/services',
-        helpersDir: 'src/helpers',
-        configDir: 'config',
-        prompt: 'app> ',
-        useColors: true,
-        useGlobal: true,
-        historyFile: '/tmp/history',
-        preload: ['./preload.js'],
-        context: { customKey: 'value' },
-        forceExpress: false
-      };
-
-      expect(options.rootPath).toBe('/app');
-      expect(options.prompt).toBe('app> ');
-    });
-
-    it('should allow empty options object', () => {
-      const options: ExpressConsoleOptions = {};
-      expect(options).toBeDefined();
-    });
-
-    it('should allow partial options', () => {
-      const options: ExpressConsoleOptions = {
-        rootPath: '/app',
-        prompt: 'dev> '
-      };
-
-      expect(options.rootPath).toBe('/app');
-      expect(options.prompt).toBe('dev> ');
-    });
-  });
-
-  describe('AppLoaderOptions', () => {
-    it('should allow creating loader options', () => {
-      const options: AppLoaderOptions = {
-        rootPath: '/app',
-        config: {
-          modelsDir: 'models',
-          servicesDir: 'services'
-        }
-      };
-
-      expect(options.rootPath).toBe('/app');
-    });
-  });
-
-  describe('RouteInfo', () => {
-    it('should define route information structure', () => {
-      const route: RouteInfo = {
-        path: '/users',
-        methods: ['GET', 'POST']
-      };
-
-      expect(route.path).toBe('/users');
-      expect(route.methods).toContain('GET');
-      expect(route.methods).toContain('POST');
-    });
-  });
-
-  describe('LoadedContext', () => {
-    it('should allow arbitrary properties', () => {
-      const context: LoadedContext = {
-        customModel: {},
-        customService: {},
-        NODE_ENV: 'test',
-        env: process.env,
-        config: { test: true }
-      };
-
-      expect(context.customModel).toBeDefined();
-      expect(context.NODE_ENV).toBe('test');
-    });
-
-    it('should have optional standard properties', () => {
-      const minimalContext: LoadedContext = {};
-      expect(minimalContext).toBeDefined();
-
-      const fullContext: LoadedContext = {
-        app: {} as any,
-        expressApp: {} as any,
-        nestApp: {} as any,
-        config: {},
-        env: {},
-        NODE_ENV: 'development',
-        routes: []
-      };
-      expect(fullContext.app).toBeDefined();
-    });
-  });
-
-  describe('ConfigResult', () => {
-    it('should define complete configuration result', () => {
-      const config: ConfigResult = {
-        rootPath: '/app',
-        appEntry: 'src/app.js',
-        modelsDir: 'models',
-        servicesDir: 'services',
-        helpersDir: 'helpers',
-        configDir: 'config',
-        prompt: 'app> ',
-        useColors: true,
-        historyFile: null,
-        preload: [],
-        context: {},
-        forceExpress: false
-      };
-
-      expect(config.rootPath).toBe('/app');
-      expect(config.useColors).toBe(true);
-    });
-  });
-
-  describe('PropertyInfo', () => {
-    it('should define property information structure', () => {
-      const prop: PropertyInfo = {
-        name: 'findById',
-        type: 'Function',
-        isMethod: true,
-        isStatic: false,
-        isInherited: false,
-        description: 'Find by ID method'
-      };
-
-      expect(prop.name).toBe('findById');
-      expect(prop.isMethod).toBe(true);
-    });
-
-    it('should allow optional value field', () => {
-      const prop: PropertyInfo = {
-        name: 'config',
-        type: 'Object',
-        value: { port: 3000 },
-        isMethod: false,
-        isStatic: false,
-        isInherited: false
-      };
-
-      expect(prop.value).toEqual({ port: 3000 });
-    });
-  });
-
-  describe('ObjectMetadata', () => {
-    it('should define complete object metadata', () => {
-      const metadata: ObjectMetadata = {
-        name: 'UserService',
-        type: 'UserService',
-        constructor: 'UserService',
-        properties: [
-          {
-            name: 'create',
-            type: 'Function',
-            isMethod: true,
-            isStatic: false,
-            isInherited: false
-          }
-        ],
-        staticProperties: [
-          {
-            name: 'getName',
-            type: 'Function',
-            isMethod: true,
-            isStatic: true,
-            isInherited: false
-          }
-        ],
-        prototypeChain: ['UserService', 'BaseService']
-      };
-
-      expect(metadata.name).toBe('UserService');
-      expect(metadata.properties).toHaveLength(1);
-      expect(metadata.prototypeChain).toContain('BaseService');
-    });
-
-    it('should allow optional constructor field', () => {
-      const metadata: ObjectMetadata = {
-        name: 'plainObject',
-        type: 'Object',
-        constructor: undefined,
-        properties: [],
-        staticProperties: [],
-        prototypeChain: []
-      };
-
-      expect(metadata.constructor).toBeUndefined();
-    });
-  });
-});
-
-describe('Module augmentation', () => {
-  it('should extend REPLServer interface', () => {
-    // This test verifies that the module augmentation compiles correctly
-    // The actual augmentation is in types.ts
-    
-    interface MockREPLServer {
-      history: string[];
-    }
-
-    const mockServer: MockREPLServer = {
-      history: ['cmd1', 'cmd2']
+describe('Type Exports', () => {
+  it('should export ExpressConsoleOptions interface', () => {
+    const options: ExpressConsoleOptions = {
+      rootPath: '/test',
+      appEntry: 'app.js',
+      modelsDir: 'models',
+      servicesDir: 'services',
+      helpersDir: 'helpers',
+      configDir: 'config',
+      prompt: 'test> ',
+      useColors: true,
+      useGlobal: true,
+      historyFile: null,
+      preload: [],
+      context: {},
+      forceExpress: false
     };
 
-    expect(mockServer.history).toHaveLength(2);
+    expect(options.rootPath).toBe('/test');
+    expect(options.prompt).toBe('test> ');
+  });
+
+  it('should export AppLoaderOptions interface', () => {
+    const options: AppLoaderOptions = {
+      rootPath: '/test',
+      config: { modelsDir: 'src/models' }
+    };
+
+    expect(options.rootPath).toBe('/test');
+    expect(options.config?.modelsDir).toBe('src/models');
+  });
+
+  it('should export LoadedContext interface', () => {
+    const context: LoadedContext = {
+      env: process.env,
+      NODE_ENV: 'test',
+      config: { db: { host: 'localhost' } },
+      app: undefined,
+      expressApp: undefined,
+      nestApp: undefined,
+      routes: []
+    };
+
+    expect(context.NODE_ENV).toBe('test');
+    expect(Array.isArray(context.routes)).toBe(true);
+  });
+
+  it('should export ConfigResult interface', () => {
+    const config: ConfigResult = {
+      rootPath: '/test',
+      appEntry: 'src/app.js',
+      modelsDir: 'src/models',
+      servicesDir: 'src/services',
+      helpersDir: 'helpers',
+      configDir: 'config',
+      prompt: 'test> ',
+      useColors: true,
+      historyFile: null,
+      preload: [],
+      context: {},
+      forceExpress: false
+    };
+
+    expect(config.appEntry).toBe('src/app.js');
+  });
+
+  it('should export RouteInfo interface', () => {
+    const route: RouteInfo = {
+      path: '/api/users',
+      methods: ['GET', 'POST']
+    };
+
+    expect(route.path).toBe('/api/users');
+    expect(route.methods).toContain('GET');
+  });
+
+  it('should export ConsoleCommand interface', () => {
+    const command: ConsoleCommand = {
+      help: 'Test command',
+      action: function() { return; }
+    };
+
+    expect(command.help).toBe('Test command');
+    expect(typeof command.action).toBe('function');
+  });
+
+  it('should export PropertyInfo interface', () => {
+    const prop: PropertyInfo = {
+      name: 'testProp',
+      type: 'string',
+      value: 'test',
+      isMethod: false,
+      isStatic: false,
+      isInherited: false,
+      description: 'A test property'
+    };
+
+    expect(prop.name).toBe('testProp');
+    expect(prop.isMethod).toBe(false);
+  });
+
+  it('should export ObjectMetadata interface', () => {
+    const metadata: ObjectMetadata = {
+      name: 'TestClass',
+      type: 'TestClass',
+      constructor: 'TestClass',
+      properties: [],
+      staticProperties: [],
+      prototypeChain: ['BaseClass']
+    };
+
+    expect(metadata.name).toBe('TestClass');
+    expect(metadata.prototypeChain).toContain('BaseClass');
+  });
+
+  it('should export CompleterResult type', () => {
+    const result: CompleterResult = [['option1', 'option2'], 'option'];
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(Array.isArray(result[0])).toBe(true);
+    expect(result[0]).toContain('option1');
+    expect(typeof result[1]).toBe('string');
+  });
+
+  it('should allow partial ExpressConsoleOptions', () => {
+    // Test that partial options are valid
+    const partialOptions: ExpressConsoleOptions = {
+      rootPath: '/test',
+      prompt: 'custom> '
+    };
+
+    expect(partialOptions.rootPath).toBe('/test');
+    expect(partialOptions.prompt).toBe('custom> ');
+  });
+
+  it('should allow empty LoadedContext', () => {
+    const emptyContext: LoadedContext = {};
+    expect(Object.keys(emptyContext)).toHaveLength(0);
+  });
+
+  it('should allow extended context properties', () => {
+    const extendedContext: LoadedContext = {
+      env: process.env,
+      NODE_ENV: 'development',
+      customService: { find: () => [] },
+      customModel: class CustomModel {}
+    };
+
+    expect(extendedContext.customService).toBeDefined();
+    expect(typeof extendedContext.customModel).toBe('function');
   });
 });

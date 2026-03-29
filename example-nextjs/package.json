@@ -1,0 +1,53 @@
+{
+  "name": "nodesh-example-nextjs",
+  "version": "1.0.0",
+  "description": "Next.js example for NodeSH with API routes, multi-database support (MongoDB, PostgreSQL, MySQL, Neo4j, DynamoDB, Redis)",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "console": "nodesh --yes",
+    "shell": "nodesh",
+    "test:actions": "node test-server-actions.js",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:clean": "docker-compose down -v",
+    "docker:postgres": "docker-compose up -d postgres pgadmin",
+    "docker:mysql": "docker-compose up -d mysql phpmyadmin",
+    "docker:neo4j": "docker-compose up -d neo4j",
+    "docker:dynamodb": "docker-compose up -d dynamodb dynamodb-admin"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1019.0",
+    "@aws-sdk/lib-dynamodb": "^3.1019.0",
+    "@prisma/client": "^5.0.0",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^17.3.1",
+    "ioredis": "^5.3.0",
+    "mongoose": "^8.0.0",
+    "mysql2": "^3.20.0",
+    "neo4j-driver": "^5.28.3",
+    "next": "^14.0.0",
+    "pg": "^8.20.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "prisma": "^5.0.0",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.0.0"
+  },
+  "nodesh": {
+    "prompt": "next> ",
+    "modelsDir": "src/models",
+    "servicesDir": "src/services",
+    "helpersDir": "lib"
+  }
+}

@@ -6,9 +6,9 @@ import * as path from 'path';
 import { ConfigResult } from './types';
 
 export const CONFIG_FILES: string[] = [
-  '.node-console.js',
-  '.node-console.json',
-  'node-console.config.js'
+  '.nodesh.js',
+  '.nodesh.json',
+  'nodesh.config.js'
 ];
 
 /**
@@ -32,11 +32,15 @@ export function loadConfig(rootPath: string = process.cwd()): ConfigResult {
   let config: Partial<ConfigResult> = { ...defaults };
   let configFileLoaded = false;
 
-  // Check package.json for nodeConsole config first (lower priority)
+  // Check package.json for nodesh config first (lower priority)
   const packageJsonPath = path.join(rootPath, 'package.json');
   if (fs.existsSync(packageJsonPath)) {
     try {
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+      if (packageJson.nodesh) {
+        config = { ...config, ...packageJson.nodesh };
+      }
+      // Also check old name for backward compatibility
       if (packageJson.nodeConsole) {
         config = { ...config, ...packageJson.nodeConsole };
       }
@@ -73,18 +77,18 @@ export function loadConfig(rootPath: string = process.cwd()): ConfigResult {
  * Generate default config file
  */
 export function generateConfig(rootPath: string = process.cwd()): { created: boolean; path: string } {
-  const configPath = path.join(rootPath, '.node-console.js');
+  const configPath = path.join(rootPath, '.nodesh.js');
   
   if (fs.existsSync(configPath)) {
     return { created: false, path: configPath };
   }
 
   const template = `/**
- * Node Console Configuration
+ * NodeSH Configuration
  * 
- * This file configures the behavior of the node-console REPL.
+ * This file configures the behavior of the NodeSH REPL.
  * 
- * @see https://github.com/yourusername/node-console
+ * @see https://github.com/eftech93/nodesh
  */
 
 module.exports = {
@@ -102,7 +106,7 @@ module.exports = {
   prompt: 'node> ',
   useColors: true,
   
-  // History file (null for default: ~/.node_console_history)
+  // History file (null for default: ~/.nodesh_history)
   historyFile: null,
 
   // Additional files to preload

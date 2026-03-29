@@ -1,214 +1,255 @@
-# NestJS Example - Node Console
+# NodeSH Example - NestJS with Multi-Database Support
 
-A complete NestJS application with MongoDB, Redis, and BullMQ integration.
+This is a comprehensive example application demonstrating NodeSH integration with NestJS and **7+ databases**:
 
-## Features
+| Database | Type | Usage in this App |
+|----------|------|-------------------|
+| 🍃 MongoDB | Document | Users, Products, Orders |
+| 🐘 PostgreSQL | Relational | Customers |
+| 🐬 MySQL | Relational | Inventory |
+| ⚡ Redis | Key-Value | Caching, Sessions, BullMQ |
+| 🕸️ Neo4j | Graph | Product Recommendations |
+| 📦 DynamoDB | NoSQL | Analytics Events |
 
-- ✅ **NestJS 10** - Modern Node.js framework with TypeScript
-- ✅ **MongoDB** - With Mongoose ODM
-- ✅ **Redis** - Caching and session storage
-- ✅ **BullMQ** - Distributed job queues with processors
-- ✅ **TypeScript** - Full type safety
-- ✅ **Console Ready** - Test everything via node-console
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                         NestJS API                           │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │
+│  │  Users  │ │ Products│ │ Orders  │ │ Queues  │           │
+│  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘           │
+│       │           │           │           │                 │
+│  ┌────▼────┐ ┌────▼────┐ ┌────▼────┐ ┌────▼────┐           │
+│  │ MongoDB │ │ MongoDB │ │ MongoDB │ │  Redis  │           │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘           │
+│                                                              │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐           │
+│  │ Postgres│ │  MySQL  │ │  Neo4j  │ │ DynamoDB│           │
+│  │Customers│ │Inventory│ │Recommend│ │Analytics│           │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘           │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## Quick Start
 
-### 1. Start Infrastructure
+### 1. Start All Databases
 
 ```bash
-# From the example-nestjs directory
 npm run docker:up
-
-# Or from the root node-console directory
-docker-compose -f ../docker-compose.yml up -d
 ```
 
 This starts:
-- MongoDB on port 27017
-- Redis on port 6379
-- Redis Commander UI on port 8081
+- **MongoDB** on port 27017
+- **PostgreSQL** on port 5432
+- **MySQL** on port 3306
+- **Redis** on port 6379
+- **Neo4j** on ports 7474 (HTTP) and 7687 (Bolt)
+- **DynamoDB Local** on port 8000
+- **Redis Commander** on port 8081
+- **pgAdmin** on port 8082
+- **phpMyAdmin** on port 8083
 
-### 2. Install Dependencies
-
-```bash
-npm install
-```
-
-### 3. Configure Environment
-
-```bash
-cp .env.example .env
-# Edit .env if needed (default values work with docker-compose)
-```
-
-### 4. Launch the Console
+### 2. Setup DynamoDB Tables
 
 ```bash
-# Generate config and start console
-npx node-console --yes
-
-# Or if node-console is installed globally
-node-console --yes
-
-# Or use the shorter aliases:
-ncon --yes    # 4 characters
-nc --yes      # 2 characters
-c --yes       # 1 character
+npm run db:setup
 ```
 
-## Console Examples
-
-```javascript
-// Entities are available
-nest> User
-nest> Order
-nest> Product
-
-// Services are available (from src/*/*.service.ts)
-nest> await usersService.findAll()
-nest> await ordersService.findById('some-id')
-nest> await productsService.findAll()
-nest> await cacheService.getStats()
-nest> await queuesService.getAllStatuses()
-
-// Queue processors
-nest> EmailProcessor
-nest> NotificationProcessor
-
-// Add jobs to queues
-nest> await queuesService.addEmailJob({
-  type: 'welcome',
-  to: 'test@example.com',
-  name: 'Test User'
-})
-
-// Check queue status
-nest> await queuesService.getJobCounts('email')
-nest> await queuesService.getRecentJobs('email', 'completed', 5)
-
-// Cache operations
-nest> await cacheService.set('test-key', { foo: 'bar' })
-nest> await cacheService.get('test-key')
-nest> await cacheService.getKeys('*')
-
-// Raw MongoDB queries via models
-nest> await User.find().limit(5)
-nest> await Order.find({ status: 'pending' })
-nest> await Product.find({ category: 'Electronics' })
-
-// Redis operations via cache service
-nest> await cacheService.getRedisClient().ping()
-nest> await cacheService.getStats()
-
-// Show all loaded models
-nest> .models
-
-// Show all loaded services
-nest> .services
-
-// Reload after code changes
-nest> .reload
-```
-
-## Project Structure
-
-```
-src/
-├── cache/
-│   ├── cache.module.ts
-│   ├── cache.service.ts       # → cacheService
-│   └── redis.decorator.ts
-├── orders/
-│   ├── entities/order.entity.ts  # → Order
-│   ├── orders.controller.ts
-│   ├── orders.module.ts
-│   └── orders.service.ts      # → ordersService
-├── products/
-│   ├── entities/product.entity.ts  # → Product
-│   ├── products.module.ts
-│   └── products.service.ts    # → productsService
-├── queues/
-│   ├── processors/
-│   │   ├── email.processor.ts     # → EmailProcessor
-│   │   └── notification.processor.ts  # → NotificationProcessor
-│   ├── queues.module.ts
-│   └── queues.service.ts      # → queuesService
-├── users/
-│   ├── entities/user.entity.ts    # → User
-│   ├── users.controller.ts
-│   ├── users.module.ts
-│   └── users.service.ts       # → usersService
-├── app.module.ts
-├── dashboard.controller.ts
-├── health.controller.ts
-└── main.ts
-```
-
-## Available in Console
-
-### Entities
-- `User` - User model
-- `Order` - Order model
-- `Product` - Product model
-
-### Services
-- `usersService` / `UsersService`
-- `ordersService` / `OrdersService`
-- `productsService` / `ProductsService`
-- `cacheService` / `CacheService`
-- `queuesService` / `QueuesService`
-
-### Queue Processors
-- `EmailProcessor`
-- `NotificationProcessor`
-
-### Utilities
-- `cacheService.getRedisClient()` - Access raw Redis client
-
-## Note on TypeScript
-
-The console uses ts-node to load TypeScript files directly. Some files may have type errors (like virtual properties on Mongoose documents), but the console will still load other files successfully.
-
-If you see TypeScript warnings during console startup, don't worry - the console will still work with the files that compile successfully.
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /health | Health check |
-| POST | /users | Create user |
-| GET | /users | List users |
-| GET | /users/:id | Get user |
-| POST | /orders | Create order |
-| GET | /orders/:id | Get order |
-| GET | /orders/user/:userId | Get user orders |
-| PATCH | /orders/:id/status | Update order status |
-| GET | /dashboard/stats | Dashboard stats |
-
-## Docker Services
-
-| Service | Port | Description |
-|---------|------|-------------|
-| MongoDB | 27017 | Database |
-| Redis | 6379 | Cache & Queue |
-| Redis Commander | 8081 | Redis UI (http://localhost:8081) |
-
-## Stopping Infrastructure
+### 3. Start the Application
 
 ```bash
-npm run docker:down
-# or
-docker-compose -f ../docker-compose.yml down
-```
+# Development mode
+npm run start:dev
 
-## Building for Production
-
-```bash
+# Or build and run
 npm run build
 npm start
 ```
 
-Then run console on compiled JS:
+### 4. Launch NodeSH Console
+
 ```bash
-node-console --entry dist/main.js
+npm run console
 ```
+
+## API Endpoints
+
+### MongoDB Endpoints
+- `GET /users` - List all users
+- `GET /products` - List all products
+- `GET /orders` - List all orders
+
+### PostgreSQL Endpoints
+- `GET /postgres/customers` - List customers
+- `GET /postgres/customers/stats` - Customer statistics
+- `POST /postgres/customers` - Create customer
+
+### MySQL Endpoints
+- `GET /mysql/inventory` - List inventory
+- `GET /mysql/inventory/stats` - Inventory statistics
+- `GET /mysql/inventory/low-stock` - Low stock items
+- `PUT /mysql/inventory/:id/stock` - Update stock
+
+### Neo4j Endpoints
+- `GET /neo4j/recommendations/:productId` - Get product recommendations
+- `GET /neo4j/recommendations/customer/:customerId` - Customer recommendations
+- `POST /neo4j/recommendations/view` - Record product view
+
+### DynamoDB Endpoints
+- `GET /dynamodb/analytics/stats` - Analytics statistics
+- `GET /dynamodb/analytics/events` - Recent events
+- `POST /dynamodb/analytics/pageview` - Record page view
+- `POST /dynamodb/analytics/purchase` - Record purchase
+
+### Dashboard Endpoints
+- `GET /dashboard/all-stats` - Stats from all databases
+- `GET /dashboard/mongodb` - MongoDB stats
+- `GET /dashboard/postgresql` - PostgreSQL stats
+- `GET /dashboard/mysql` - MySQL stats
+- `GET /dashboard/neo4j` - Neo4j stats
+- `GET /dashboard/dynamodb` - DynamoDB stats
+
+## Using NodeSH Console
+
+### Cross-Database Operations
+
+```bash
+$ npm run console
+
+nest> // Create a customer in PostgreSQL
+nest> const customer = await customersService.create({
+...   email: 'alice@example.com',
+...   firstName: 'Alice',
+...   lastName: 'Smith'
+... })
+
+nest> // Add inventory in MySQL
+nest> const item = await inventoryService.create({
+...   sku: 'NEW-001',
+...   productName: 'New Product',
+...   quantity: 100,
+...   unitPrice: 49.99,
+...   warehouse: 'NYC'
+... })
+
+nest> // Create a user in MongoDB
+nest> const user = await usersService.create({
+...   email: 'alice@example.com',
+...   password: 'password123',
+...   name: { first: 'Alice', last: 'Smith' }
+... })
+
+nest> // Create a product recommendation in Neo4j
+nest> await recommendationsService.createProductView(customer.id, 'prod-1')
+
+nest> // Record analytics in DynamoDB
+nest> await analyticsService.recordPageView('/products', user._id.toString())
+
+nest> // Get all database stats
+nest> await databaseDashboardController.getAllStats()
+```
+
+### Individual Database Operations
+
+```javascript
+// MongoDB
+nest> await User.find().limit(5)
+nest> await Product.find({ price: { $gt: 100 } })
+nest> await Order.find().populate('user').populate('items.product')
+
+// PostgreSQL
+nest> await customersService.findAll()
+nest> await customerRepository.findOne({ where: { email: 'test@test.com' } })
+
+// MySQL
+nest> await inventoryService.getLowStock(10)
+nest> await inventoryService.updateStock(itemId, -5)
+
+// Redis
+nest> await cacheService.set('key', 'value', 3600)
+nest> await cacheService.get('key')
+nest> await cacheService.getStats()
+
+// Neo4j
+nest> await recommendationsService.getRecommendations('prod-1', 5)
+nest> await recommendationsService.getStats()
+
+// DynamoDB
+nest> await analyticsService.getStats()
+nest> await analyticsService.recordPurchase('order-123', 299.99, 'customer-456')
+```
+
+## Database Management UIs
+
+After running `npm run docker:up`, access the database management tools:
+
+| Tool | URL | Description |
+|------|-----|-------------|
+| Redis Commander | http://localhost:8081 | Redis GUI |
+| pgAdmin | http://localhost:8082 | PostgreSQL GUI |
+| phpMyAdmin | http://localhost:8083 | MySQL GUI |
+| Neo4j Browser | http://localhost:7474 | Neo4j GUI |
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and adjust as needed:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MONGODB_URI` | mongodb://admin:password@localhost:27017/nodeconsole | MongoDB connection |
+| `POSTGRES_HOST` | localhost | PostgreSQL host |
+| `POSTGRES_PORT` | 5432 | PostgreSQL port |
+| `MYSQL_HOST` | localhost | MySQL host |
+| `MYSQL_PORT` | 3306 | MySQL port |
+| `REDIS_HOST` | localhost | Redis host |
+| `NEO4J_URI` | bolt://localhost:7687 | Neo4j connection |
+| `DYNAMODB_ENDPOINT` | http://localhost:8000 | DynamoDB endpoint |
+
+## Stopping the Databases
+
+```bash
+npm run docker:down
+```
+
+## Troubleshooting
+
+### MongoDB Connection Issues
+```bash
+# Check MongoDB status
+docker ps | grep mongo
+
+# View MongoDB logs
+docker logs node-console-mongodb
+```
+
+### PostgreSQL Connection Issues
+```bash
+# Check PostgreSQL logs
+docker logs node-console-postgres
+```
+
+### DynamoDB Issues
+```bash
+# Re-run setup
+npm run db:setup
+```
+
+### Reset All Data
+```bash
+# Stop and remove volumes
+npm run docker:down
+docker volume prune
+
+# Restart
+npm run docker:up
+npm run db:setup
+```
+
+## License
+
+MIT
