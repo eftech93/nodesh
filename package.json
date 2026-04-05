@@ -1,6 +1,6 @@
 {
   "name": "@eftech93/nodesh",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Interactive shell for Node.js applications (Express, NestJS, etc.) with autocompletion",
   "keywords": [
     "nodejs",

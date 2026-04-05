@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.2] - 2024
+
 ### Added
 
 - **DynamoDB `createTable` method** - Added programmatic table creation with support for:
@@ -22,11 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Autocomplete integration tests
   - CLI harness for programmatic CLI testing
   - Docker Compose test infrastructure with 6 databases (MongoDB, Redis, PostgreSQL, MySQL, Neo4j, DynamoDB)
+- **Connection Manager Improvements**:
+  - `safeGet()` method for safe connection access (returns undefined instead of throwing)
+  - `ensureConnected()` helper for checking database status
+  - `getConnections()` for safe access to all connections
 
 ### Changed
 
 - **Improved DynamoDB Adapter** - Enhanced connection management and added table management capabilities
 - **Test Infrastructure** - Added `docker-compose.test.yml` and test scripts for running integration tests
+- **Enhanced NestJS Bootstrap** - Improved DI container initialization for better service injection
+- **Error Display** - Errors now show full stack traces in the REPL
+
+## [0.0.1] - 2024
 
 ## [0.0.1] - 2024
 
