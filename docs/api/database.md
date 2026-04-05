@@ -58,6 +58,33 @@ const redis = manager.get('redis');
 const pg = manager.get('postgresql');
 ```
 
+#### safeGet()
+
+Gets a connection by ID, returning `undefined` if not found (doesn't throw).
+
+```typescript
+safeGet(id: string): DatabaseConnection | undefined
+```
+
+**Parameters:**
+- `id` - Connection identifier
+
+**Returns:** Connection instance or `undefined`
+
+**Example:**
+
+```typescript
+// Safe access that won't throw if not connected
+const mongo = manager.safeGet('mongodb');
+if (mongo) {
+  // Use connection
+}
+
+// Useful for optional connections
+const redis = manager.safeGet('redis');
+const cacheValue = redis ? await redis.get('key') : null;
+```
+
 #### isConnected()
 
 Checks if a database is connected.
