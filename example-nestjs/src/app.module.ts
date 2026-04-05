@@ -38,7 +38,7 @@ import { DatabaseDashboardController } from './database-dashboard.controller';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         connection: {
-          url: configService.get<string>('REDIS_URL') || 'redis://localhost:6379',
+          url: configService.get<string>('REDIS_URL') || `redis://${configService.get<string>('REDIS_HOST') || 'localhost'}:${configService.get<string>('REDIS_PORT') || '6379'}`,
         },
       }),
       inject: [ConfigService],

@@ -58,6 +58,33 @@ const redis = manager.get('redis');
 const pg = manager.get('postgresql');
 ```
 
+#### safeGet()
+
+Gets a connection by ID, returning `undefined` if not found (doesn't throw).
+
+```typescript
+safeGet(id: string): DatabaseConnection | undefined
+```
+
+**Parameters:**
+- `id` - Connection identifier
+
+**Returns:** Connection instance or `undefined`
+
+**Example:**
+
+```typescript
+// Safe access that won't throw if not connected
+const mongo = manager.safeGet('mongodb');
+if (mongo) {
+  // Use connection
+}
+
+// Useful for optional connections
+const redis = manager.safeGet('redis');
+const cacheValue = redis ? await redis.get('key') : null;
+```
+
 #### isConnected()
 
 Checks if a database is connected.
@@ -307,27 +334,63 @@ try {
 ```typescript
 const dynamo = manager.get('dynamodb');
 
+// Create table with GSI support
+await dynamo.createTable({
+  tableName: 'Users',
+  keySchema: [
+    { attributeName: 'pk', keyType: 'HASH' },
+    { attributeName: 'sk', keyType: 'RANGE' }
+  ],
+  attributeDefinitions: [
+    { attributeName: 'pk', attributeType: 'S' },
+    { attributeName: 'sk', attributeType: 'S' }
+  ],
+  billingMode: 'PAY_PER_REQUEST'
+});
+
 // Put item
-await dynamo.put({
-  TableName: 'Users',
-  Item: {
-    id: '123',
-    name: 'John',
-    email: 'john@example.com'
-  }
-}).promise();
+await dynamo.put('Users', {
+  pk: 'USER#123',
+  sk: 'PROFILE#123',
+  name: 'John',
+  email: 'john@example.com'
+});
 
 // Get item
-const result = await dynamo.get({
-  TableName: 'Users',
-  Key: { id: '123' }
-}).promise();
+const result = await dynamo.get('Users', {
+  pk: 'USER#123',
+  sk: 'PROFILE#123'
+});
+
+// Query
+const items = await dynamo.query('Users', {
+  keyCondition: 'pk = :pk',
+  values: { ':pk': 'USER#123' }
+});
 
 // Scan
-const scan = await dynamo.scan({
-  TableName: 'Users'
-}).promise();
+const allItems = await dynamo.scan('Users', { limit: 100 });
+
+// List tables
+const tables = await dynamo.listTables();
+
+// Describe table
+const tableInfo = await dynamo.describeTable('Users');
 ```
+
+### DynamoDBConnection Methods
+
+| Method | Description |
+|--------|-------------|
+| `createTable(config)` | Create a table with key schema, attribute definitions, and optional GSIs |
+| `put(tableName, item)` | Insert or update an item |
+| `get(tableName, key)` | Get an item by key |
+| `query(tableName, options)` | Query items with key conditions |
+| `scan(tableName, options)` | Scan items with optional filters |
+| `update(tableName, key, updates)` | Update specific attributes |
+| `delete(tableName, key)` | Delete an item by key |
+| `listTables()` | List all table names |
+| `describeTable(tableName)` | Get table metadata |
 
 ## Environment Configuration
 

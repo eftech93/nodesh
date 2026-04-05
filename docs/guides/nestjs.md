@@ -141,9 +141,12 @@ nest> await cacheService.clear()
 ### How It Works
 
 NodeSH automatically:
-1. Bootstraps the NestJS application
-2. Resolves all providers from modules
-3. Injects them into the shell context
+1. Bootstraps the NestJS application using `NestFactory.create()`
+2. Initializes the full NestJS DI container
+3. Resolves all providers from modules
+4. Injects them into the shell context
+
+This means you get fully initialized services with all their dependencies properly injected, just like in your running application.
 
 ### Accessing Injected Services
 

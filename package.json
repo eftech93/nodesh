@@ -1,6 +1,6 @@
 {
   "name": "@eftech93/nodesh",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Interactive shell for Node.js applications (Express, NestJS, etc.) with autocompletion",
   "keywords": [
     "nodejs",
@@ -66,7 +66,17 @@
     "relink": "npm run build && npm run link:global && npm run link:example && npm run link:example-nextjs && npm run link:example-nestjs",
     "relink:nextjs": "npm run build && npm run link:global && cd example-nextjs && npm link @eftech93/nodesh",
     "relink:nestjs": "npm run build && npm run link:global && cd example-nestjs && npm link @eftech93/nodesh",
-    "relink:force": "npm run build && npm run link:global && cd example && rm -rf node_modules/@eftech93 && npm link @eftech93/nodesh && cd ../example-nextjs && rm -rf node_modules/@eftech93 && npm link @eftech93/nodesh"
+    "relink:force": "npm run build && npm run link:global && cd example && rm -rf node_modules/@eftech93 && npm link @eftech93/nodesh && cd ../example-nextjs && rm -rf node_modules/@eftech93 && npm link @eftech93/nodesh",
+    "test:integration": "bash scripts/run-integration-tests.sh",
+    "test:integration:nextjs": "bash scripts/run-integration-tests.sh nextjs",
+    "test:integration:nestjs": "bash scripts/run-integration-tests.sh nestjs",
+    "test:integration:express": "bash scripts/run-integration-tests.sh express",
+    "test:integration:autocomplete": "bash scripts/run-integration-tests.sh autocomplete",
+    "test:integration:quick": "cross-env ENABLE_INTEGRATION_TESTS=true npx jest tests/integration --verbose --runInBand --no-watchman --forceExit",
+    "test:integration:ci": "cross-env ENABLE_INTEGRATION_TESTS=true npx jest tests/integration --runInBand --no-watchman --forceExit",
+    "test:docker:up": "docker-compose -f docker-compose.test.yml up -d",
+    "test:docker:down": "docker-compose -f docker-compose.test.yml down --volumes",
+    "test:docker:logs": "docker-compose -f docker-compose.test.yml logs -f"
   },
   "dependencies": {
     "chalk": "^4.1.2",
@@ -80,9 +90,10 @@
     "@types/express": "^4.17.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
+    "cross-env": "^10.1.0",
+    "dotenv": "^17.3.1",
     "express": "^4.18.2",
     "jest": "^29.0.0",
-
     "next": "^16.2.1",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.0",

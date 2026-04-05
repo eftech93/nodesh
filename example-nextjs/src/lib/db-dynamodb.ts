@@ -11,16 +11,38 @@ let connection: DynamoDBConnection | null = null;
 
 export async function connectDynamoDB(): Promise<DynamoDBConnection> {
   if (!connection) {
-    connection = await createDynamoDBConnectionFromEnv();
+    connection = createDynamoDBConnectionFromEnv();
+    await connection.connect();
   }
   return connection;
 }
 
 // Initialize tables
 export async function initDynamoDB(): Promise<void> {
-  await connectDynamoDB();
-  // Tables would be created via docker-compose or CloudFormation
-  // This is a placeholder for any runtime initialization
+  const conn = await connectDynamoDB();
+  
+  // Create Users table if it doesn't exist
+  const tableName = process.env.DYNAMODB_TABLE_USERS || 'Users';
+  await (conn as any).createTable({
+    tableName,
+    keySchema: [
+      { attributeName: 'pk', keyType: 'HASH' },
+      { attributeName: 'sk', keyType: 'RANGE' },
+    ],
+    attributeDefinitions: [
+      { attributeName: 'pk', attributeType: 'S' },
+      { attributeName: 'sk', attributeType: 'S' },
+      { attributeName: 'email', attributeType: 'S' },
+    ],
+    billingMode: 'PAY_PER_REQUEST',
+    globalSecondaryIndexes: [
+      {
+        indexName: 'EmailIndex',
+        keySchema: [{ attributeName: 'email', keyType: 'HASH' }],
+        projectionType: 'ALL',
+      },
+    ],
+  });
 }
 
 // DynamoDB Repository for Users

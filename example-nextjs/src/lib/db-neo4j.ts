@@ -14,7 +14,8 @@ let connection: Neo4jConnection | null = null;
 
 export async function connectNeo4j(): Promise<Neo4jConnection> {
   if (!connection) {
-    connection = await createNeo4jConnectionFromEnv();
+    connection = createNeo4jConnectionFromEnv();
+    await connection.connect();
     neo4jDriver = (connection as any).driver;
   }
   return connection;
@@ -32,12 +33,19 @@ export const SocialGraph = {
     const driver = (connection as any).driver;
     const session = driver.session();
     
+    const userWithDefaults = {
+      bio: '',
+      avatar: '',
+      createdAt: new Date().toISOString(),
+      ...user,
+    };
+    
     try {
       await session.run(
         `CREATE (u:User {id: $id, name: $name, email: $email, bio: $bio, avatar: $avatar, createdAt: $createdAt})`,
-        user
+        userWithDefaults
       );
-      return user;
+      return userWithDefaults;
     } finally {
       await session.close();
     }

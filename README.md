@@ -237,6 +237,34 @@ const prisma = manager.get('prisma');
 await helpers.getDBStats();
 ```
 
+**DynamoDB Table Creation:**
+
+```javascript
+const dynamo = manager.get('dynamodb');
+
+// Create table with GSI support
+await dynamo.createTable({
+  tableName: 'Users',
+  keySchema: [
+    { attributeName: 'pk', keyType: 'HASH' },
+    { attributeName: 'sk', keyType: 'RANGE' }
+  ],
+  attributeDefinitions: [
+    { attributeName: 'pk', attributeType: 'S' },
+    { attributeName: 'sk', attributeType: 'S' },
+    { attributeName: 'email', attributeType: 'S' }
+  ],
+  billingMode: 'PAY_PER_REQUEST',
+  globalSecondaryIndexes: [
+    {
+      indexName: 'EmailIndex',
+      keySchema: [{ attributeName: 'email', keyType: 'HASH' }],
+      projectionType: 'ALL'
+    }
+  ]
+});
+```
+
 **In the NodeSH Shell:**
 
 ```javascript
@@ -622,10 +650,10 @@ Object.assign(replServer.context, context);
 
 ### Running Tests
 
-The library includes comprehensive unit tests using Jest:
+The library includes comprehensive unit tests and integration tests using Jest:
 
 ```bash
-# Run all tests
+# Run all unit tests
 npm test
 
 # Run tests in watch mode
@@ -634,6 +662,34 @@ npm test -- --watch
 # Run tests with coverage
 npm test -- --coverage
 ```
+
+### Integration Tests
+
+Integration tests verify the CLI works with real projects and databases:
+
+```bash
+# Start test databases (Docker required)
+npm run test:docker:up
+
+# Run all integration tests
+npm run test:integration
+
+# Run specific integration tests
+npm run test:integration:nextjs
+npm run test:integration:nestjs
+npm run test:integration:express
+
+# Stop test databases
+npm run test:docker:down
+```
+
+Test infrastructure includes 6 databases running on custom ports:
+- MongoDB (port 9000)
+- Redis (port 9001)
+- PostgreSQL (port 9002)
+- MySQL (port 9003)
+- Neo4j (ports 9004/9005)
+- DynamoDB Local (port 9006)
 
 ### Test Structure
 
@@ -644,6 +700,7 @@ Tests are organized in the `tests/` directory:
 - `loader.test.ts` - Tests for application loading
 - `console.test.ts` - Tests for the main console class
 - `types.test.ts` - Tests for TypeScript type definitions
+- `integration/` - Integration tests with real projects and databases
 
 ### Building
 

@@ -55,9 +55,9 @@ const orderSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Pre-save middleware to calculate total
-orderSchema.pre('save', function(next) {
-  if (this.isModified('items')) {
+// Pre-validate middleware to calculate total
+orderSchema.pre('validate', function(next) {
+  if (this.isModified('items') || this.isNew) {
     this.totalAmount = this.items.reduce((sum, item) => {
       return sum + (item.price * item.quantity);
     }, 0);

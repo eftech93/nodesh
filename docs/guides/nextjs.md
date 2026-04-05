@@ -134,6 +134,32 @@ next> await auth.hashPassword('password123')
 
 ## Database Integration
 
+### Connection Status Checking
+
+NodeSH provides helpers to check database connection status:
+
+```javascript
+// Check all connections
+next> await ensureConnected()
+// => {
+//   connected: true,
+//   connections: {
+//     mongodb: { connected: true },
+//     postgresql: { connected: true },
+//     redis: { connected: false, error: 'Connection refused' }
+//   }
+// }
+
+// Get individual connections safely (returns undefined if not connected)
+next> const connections = getConnections()
+next> connections.mongo   // MongoDB connection or undefined
+next> connections.pg     // PostgreSQL connection or undefined
+next> connections.redis  // Redis connection or undefined
+next> connections.mysql  // MySQL connection or undefined
+next> connections.neo4j  // Neo4j connection or undefined
+next> connections.dynamo // DynamoDB connection or undefined
+```
+
 ### Prisma (Recommended)
 
 ```typescript

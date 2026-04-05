@@ -411,6 +411,7 @@ try {
 - Local DynamoDB support
 - Document client
 - Batch operations
+- Table creation with GSI support
 
 **Setup:**
 ```bash
@@ -435,26 +436,51 @@ AWS_SECRET_ACCESS_KEY=your-secret
 ```javascript
 const dynamo = manager.get('dynamodb');
 
+// Create table (idempotent - skips if exists)
+await dynamo.createTable({
+  tableName: 'Users',
+  keySchema: [
+    { attributeName: 'pk', keyType: 'HASH' },
+    { attributeName: 'sk', keyType: 'RANGE' }
+  ],
+  attributeDefinitions: [
+    { attributeName: 'pk', attributeType: 'S' },
+    { attributeName: 'sk', attributeType: 'S' },
+    { attributeName: 'email', attributeType: 'S' }
+  ],
+  billingMode: 'PAY_PER_REQUEST',
+  globalSecondaryIndexes: [
+    {
+      indexName: 'EmailIndex',
+      keySchema: [{ attributeName: 'email', keyType: 'HASH' }],
+      projectionType: 'ALL'
+    }
+  ]
+});
+
 // Put item
-await dynamo.put({
-  TableName: 'Users',
-  Item: {
-    id: '123',
-    name: 'John',
-    email: 'john@example.com'
-  }
+await dynamo.put('Users', {
+  pk: 'USER#123',
+  sk: 'PROFILE#123',
+  name: 'John',
+  email: 'john@example.com'
 });
 
 // Get item
-const result = await dynamo.get({
-  TableName: 'Users',
-  Key: { id: '123' }
+const result = await dynamo.get('Users', {
+  pk: 'USER#123',
+  sk: 'PROFILE#123'
+});
+
+// Query with GSI
+const users = await dynamo.query('Users', {
+  index: 'EmailIndex',
+  keyCondition: 'email = :email',
+  values: { ':email': 'john@example.com' }
 });
 
 // Scan
-const scan = await dynamo.scan({
-  TableName: 'Users'
-});
+const allUsers = await dynamo.scan('Users', { limit: 100 });
 ```
 
 ## Database Helpers

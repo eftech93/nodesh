@@ -5,6 +5,39 @@ All notable changes to NodeSH are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [0.0.2] - 2024
+
+### Added
+
+- **DynamoDB `createTable` method** - Added programmatic table creation with support for:
+  - Key schema (HASH and RANGE keys)
+  - Attribute definitions
+  - Global Secondary Indexes (GSI)
+  - Billing mode configuration (PAY_PER_REQUEST or PROVISIONED)
+  - Idempotent creation (skips if table already exists)
+- **Comprehensive Integration Tests** - Added full integration test suite:
+  - Express integration tests
+  - NestJS integration tests  
+  - Next.js integration tests with real database connections
+  - Autocomplete integration tests
+  - CLI harness for programmatic CLI testing
+  - Docker Compose test infrastructure with 6 databases (MongoDB, Redis, PostgreSQL, MySQL, Neo4j, DynamoDB)
+- **Connection Manager Improvements**:
+  - `safeGet()` method for safe connection access (returns undefined instead of throwing)
+  - `ensureConnected()` helper for checking database status
+  - `getConnections()` for safe access to all connections
+
+### Changed
+
+- **Improved DynamoDB Adapter** - Enhanced connection management and added table management capabilities
+- **Test Infrastructure** - Added `docker-compose.test.yml` and test scripts for running integration tests
+- **Enhanced NestJS Bootstrap** - Improved DI container initialization for better service injection
+- **Error Display** - Errors now show full stack traces in the REPL
+
+## [0.0.1] - 2024
+
 ## [0.0.1] - 2024
 
 ### Added

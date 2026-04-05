@@ -1,0 +1,93 @@
+services:
+  # MongoDB for testing (port 9000)
+  mongodb:
+    image: mongo:7
+    container_name: nodesh_test_mongodb
+    ports:
+      - "9000:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: nodesh_test
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis for testing (port 9001)
+  redis:
+    image: redis:7-alpine
+    container_name: nodesh_test_redis
+    ports:
+      - "9001:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL for testing (port 9002)
+  postgres:
+    image: postgres:16-alpine
+    container_name: nodesh_test_postgres
+    ports:
+      - "9002:5432"
+    environment:
+      POSTGRES_USER: nodesh
+      POSTGRES_PASSWORD: nodesh_password
+      POSTGRES_DB: nodesh_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nodesh -d nodesh_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # MySQL for testing (port 9003)
+  mysql:
+    image: mysql:8
+    container_name: nodesh_test_mysql
+    ports:
+      - "9003:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_USER: nodesh
+      MYSQL_PASSWORD: nodesh_password
+      MYSQL_DATABASE: nodesh_test
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Neo4j for testing (ports 9004, 9005)
+  neo4j:
+    image: neo4j:5-community
+    container_name: nodesh_test_neo4j
+    ports:
+      - "9004:7474"
+      - "9005:7687"
+    environment:
+      NEO4J_AUTH: neo4j/nodesh_password
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "nodesh_password", "RETURN 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # DynamoDB Local for testing (port 9006)
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    container_name: nodesh_test_dynamodb
+    ports:
+      - "9006:8000"
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb"]
+    healthcheck:
+      test: ["CMD-SHELL", "java -version || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

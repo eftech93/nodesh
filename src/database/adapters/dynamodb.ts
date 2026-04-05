@@ -367,6 +367,82 @@ export class DynamoDBConnection implements DatabaseConnection {
   }
 
   /**
+   * Create a table
+   */
+  async createTable(config: {
+    tableName: string;
+    keySchema: Array<{ attributeName: string; keyType: 'HASH' | 'RANGE' }>;
+    attributeDefinitions: Array<{ attributeName: string; attributeType: 'S' | 'N' | 'B' }>;
+    billingMode?: 'PAY_PER_REQUEST' | 'PROVISIONED';
+    provisionedThroughput?: {
+      readCapacityUnits: number;
+      writeCapacityUnits: number;
+    };
+    globalSecondaryIndexes?: Array<{
+      indexName: string;
+      keySchema: Array<{ attributeName: string; keyType: 'HASH' | 'RANGE' }>;
+      projectionType: 'ALL' | 'KEYS_ONLY' | 'INCLUDE';
+      provisionedThroughput?: {
+        readCapacityUnits: number;
+        writeCapacityUnits: number;
+      };
+    }>;
+  }): Promise<void> {
+    if (!this.client) {
+      throw new Error('DynamoDB not connected');
+    }
+
+    const aws = await importAwsSdk();
+    
+    // Check if table already exists
+    const tables = await this.listTables();
+    const fullTableName = this.prefixedTable(config.tableName);
+    if (tables.includes(fullTableName)) {
+      return; // Table already exists
+    }
+
+    const input: CreateTableCommandInput = {
+      TableName: fullTableName,
+      KeySchema: config.keySchema.map((k) => ({
+        AttributeName: k.attributeName,
+        KeyType: k.keyType,
+      })),
+      AttributeDefinitions: config.attributeDefinitions.map((a) => ({
+        AttributeName: a.attributeName,
+        AttributeType: a.attributeType,
+      })),
+      BillingMode: config.billingMode || 'PAY_PER_REQUEST',
+    };
+
+    if (config.billingMode === 'PROVISIONED' && config.provisionedThroughput) {
+      input.ProvisionedThroughput = {
+        ReadCapacityUnits: config.provisionedThroughput.readCapacityUnits,
+        WriteCapacityUnits: config.provisionedThroughput.writeCapacityUnits,
+      };
+    }
+
+    if (config.globalSecondaryIndexes && config.globalSecondaryIndexes.length > 0) {
+      input.GlobalSecondaryIndexes = config.globalSecondaryIndexes.map((gsi) => ({
+        IndexName: gsi.indexName,
+        KeySchema: gsi.keySchema.map((k) => ({
+          AttributeName: k.attributeName,
+          KeyType: k.keyType,
+        })),
+        Projection: { ProjectionType: gsi.projectionType },
+        ...(gsi.provisionedThroughput && {
+          ProvisionedThroughput: {
+            ReadCapacityUnits: gsi.provisionedThroughput.readCapacityUnits,
+            WriteCapacityUnits: gsi.provisionedThroughput.writeCapacityUnits,
+          },
+        }),
+      }));
+    }
+
+    const command = new aws.CreateTableCommand(input);
+    await this.client.send(command);
+  }
+
+  /**
    * Get all items from a table (with limit)
    */
   async getAll(tableName: string, limit = 100): Promise<Record<string, unknown>[]> {
@@ -390,11 +466,32 @@ interface NodeHttpHandlerConstructor {
   new (options?: NodeHttpHandlerOptions): unknown;
 }
 
+type CreateTableCommandInput = {
+  TableName: string;
+  KeySchema: Array<{ AttributeName: string; KeyType: 'HASH' | 'RANGE' }>;
+  AttributeDefinitions: Array<{ AttributeName: string; AttributeType: 'S' | 'N' | 'B' }>;
+  BillingMode?: 'PAY_PER_REQUEST' | 'PROVISIONED';
+  ProvisionedThroughput?: {
+    ReadCapacityUnits: number;
+    WriteCapacityUnits: number;
+  };
+  GlobalSecondaryIndexes?: Array<{
+    IndexName: string;
+    KeySchema: Array<{ AttributeName: string; KeyType: 'HASH' | 'RANGE' }>;
+    Projection: { ProjectionType: 'ALL' | 'KEYS_ONLY' | 'INCLUDE' };
+    ProvisionedThroughput?: {
+      ReadCapacityUnits: number;
+      WriteCapacityUnits: number;
+    };
+  }>;
+};
+
 async function importAwsSdk(): Promise<{
   DynamoDBClient: new (config: unknown) => DynamoDBClient;
   DynamoDBDocumentClient: DocClientConstructor;
   ListTablesCommand: new () => unknown;
   DescribeTableCommand: new (input: unknown) => unknown;
+  CreateTableCommand: new (input: unknown) => unknown;
   PutCommand: new (input: unknown) => unknown;
   GetCommand: new (input: unknown) => unknown;
   QueryCommand: new (input: unknown) => unknown;
@@ -408,7 +505,7 @@ async function importAwsSdk(): Promise<{
     const clientDynamodbPath = require.resolve('@aws-sdk/client-dynamodb', { paths: [process.cwd()] });
     const libDynamodbPath = require.resolve('@aws-sdk/lib-dynamodb', { paths: [process.cwd()] });
     
-    const { DynamoDBClient, ListTablesCommand, DescribeTableCommand } = require(clientDynamodbPath);
+    const { DynamoDBClient, ListTablesCommand, DescribeTableCommand, CreateTableCommand } = require(clientDynamodbPath);
     const { 
       DynamoDBDocumentClient, 
       PutCommand, 
@@ -434,6 +531,7 @@ async function importAwsSdk(): Promise<{
       DynamoDBDocumentClient,
       ListTablesCommand,
       DescribeTableCommand,
+      CreateTableCommand,
       PutCommand,
       GetCommand,
       QueryCommand,
@@ -445,7 +543,7 @@ async function importAwsSdk(): Promise<{
   } catch {
     try {
       // Fall back to default resolution
-      const { DynamoDBClient, ListTablesCommand, DescribeTableCommand } = require('@aws-sdk/client-dynamodb');
+      const { DynamoDBClient, ListTablesCommand, DescribeTableCommand, CreateTableCommand } = require('@aws-sdk/client-dynamodb');
       const { 
         DynamoDBDocumentClient, 
         PutCommand, 
@@ -461,6 +559,7 @@ async function importAwsSdk(): Promise<{
         DynamoDBDocumentClient,
         ListTablesCommand,
         DescribeTableCommand,
+        CreateTableCommand,
         PutCommand,
         GetCommand,
         QueryCommand,
