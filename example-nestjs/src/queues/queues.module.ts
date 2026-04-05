@@ -13,8 +13,8 @@ import { QueueDashboardController } from './controllers/queue-dashboard.controll
       { name: 'report' },
     ),
   ],
-  providers: [QueuesService, EmailProcessor, NotificationProcessor],
+  providers: [QueuesService, EmailProcessor, NotificationProcessor, QueueDashboardController],
   controllers: [QueueDashboardController],
-  exports: [QueuesService, QueueDashboardController],
+  exports: [QueuesService],
 })
 export class QueuesModule {}

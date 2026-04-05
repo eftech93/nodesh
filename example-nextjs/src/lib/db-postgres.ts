@@ -14,8 +14,9 @@ let connection: PostgreSQLConnection | null = null;
 
 export async function connectPostgres(): Promise<PostgreSQLConnection> {
   if (!connection) {
-    connection = await createPostgreSQLConnectionFromEnv();
-    pg = (connection as any).client;
+    connection = createPostgreSQLConnectionFromEnv();
+    await connection.connect();
+    pg = (connection as any).pool;
   }
   return connection;
 }
@@ -23,7 +24,7 @@ export async function connectPostgres(): Promise<PostgreSQLConnection> {
 // Initialize tables
 export async function initPostgresTables(): Promise<void> {
   const conn = await connectPostgres();
-  const client = (conn as any).client;
+  const client = (conn as any).pool;
   
   await client.query(`
     CREATE TABLE IF NOT EXISTS products (
@@ -43,7 +44,7 @@ export async function initPostgresTables(): Promise<void> {
 export const ProductRepo = {
   async create(data: ProductInput): Promise<Product> {
     const conn = await connectPostgres();
-    const client = (conn as any).client;
+    const client = (conn as any).pool;
     
     const result = await client.query(
       `INSERT INTO products (name, description, price, category, stock)
@@ -56,7 +57,7 @@ export const ProductRepo = {
   
   async findAll(limit = 100): Promise<Product[]> {
     const conn = await connectPostgres();
-    const client = (conn as any).client;
+    const client = (conn as any).pool;
     
     const result = await client.query(
       'SELECT * FROM products ORDER BY created_at DESC LIMIT $1',
@@ -67,7 +68,7 @@ export const ProductRepo = {
   
   async findById(id: number): Promise<Product | null> {
     const conn = await connectPostgres();
-    const client = (conn as any).client;
+    const client = (conn as any).pool;
     
     const result = await client.query(
       'SELECT * FROM products WHERE id = $1',
@@ -78,7 +79,7 @@ export const ProductRepo = {
   
   async update(id: number, data: Partial<ProductInput>): Promise<Product | null> {
     const conn = await connectPostgres();
-    const client = (conn as any).client;
+    const client = (conn as any).pool;
     
     const fields: string[] = [];
     const values: unknown[] = [];
@@ -103,7 +104,7 @@ export const ProductRepo = {
   
   async delete(id: number): Promise<boolean> {
     const conn = await connectPostgres();
-    const client = (conn as any).client;
+    const client = (conn as any).pool;
     
     const result = await client.query(
       'DELETE FROM products WHERE id = $1',
@@ -114,7 +115,7 @@ export const ProductRepo = {
   
   async search(query: string): Promise<Product[]> {
     const conn = await connectPostgres();
-    const client = (conn as any).client;
+    const client = (conn as any).pool;
     
     const result = await client.query(
       `SELECT * FROM products 

@@ -321,7 +321,8 @@ program
         configDir: config.configDir,
         prompt: config.prompt,
         useColors: config.useColors,
-        forceExpress: config.forceExpress
+        forceExpress: config.forceExpress,
+        context: config.context
       });
       
       await consoleInstance.start();

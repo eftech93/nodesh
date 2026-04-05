@@ -152,8 +152,12 @@ export class NextJSLoader {
     try {
       const { manager, helpers: dbHelpers } = await initDatabases();
       
-      // Add helpers to context
-      Object.assign(this.context, dbHelpers);
+      // Add helpers to context (don't overwrite existing values)
+      for (const [key, value] of Object.entries(dbHelpers)) {
+        if (value !== undefined && this.context[key] === undefined) {
+          this.context[key] = value;
+        }
+      }
       this.addDatabaseHelpers();
       
     } catch (err) {
@@ -167,17 +171,41 @@ export class NextJSLoader {
   addDatabaseHelpers(): void {
     const manager = getConnectionManager();
     const dbHelpers = manager.createHelpers();
-    Object.assign(this.context, dbHelpers);
+    for (const [key, value] of Object.entries(dbHelpers)) {
+      if (value !== undefined && this.context[key] === undefined) {
+        this.context[key] = value;
+      }
+    }
     
     // Also add individual connection getters for convenience
     this.context.getConnections = () => ({
-      mongo: manager.get('mongodb'),
-      redis: manager.get('redis'),
-      pg: manager.get('postgresql'),
-      mysql: manager.get('mysql'),
-      neo4j: manager.get('neo4j'),
-      dynamo: manager.get('dynamodb'),
+      mongo: manager.safeGet('mongodb'),
+      redis: manager.safeGet('redis'),
+      pg: manager.safeGet('postgresql'),
+      mysql: manager.safeGet('mysql'),
+      neo4j: manager.safeGet('neo4j'),
+      dynamo: manager.safeGet('dynamodb'),
     });
+
+    // Add connection status checker
+    this.context.ensureConnected = async (): Promise<{
+      connected: boolean;
+      connections: Record<string, { connected: boolean; error?: string }>;
+    }> => {
+      const statuses = manager.getAllStatus();
+      const result: Record<string, { connected: boolean; error?: string }> = {};
+      let allConnected = true;
+
+      for (const [name, status] of Object.entries(statuses)) {
+        result[name] = { connected: status.connected };
+        if (!status.connected) {
+          allConnected = false;
+          result[name].error = status.error || 'Not connected';
+        }
+      }
+
+      return { connected: allConnected, connections: result };
+    };
   }
 
   /**
@@ -363,18 +391,30 @@ export class NextJSLoader {
       path.join(this.rootPath, 'src/utils'),
     ];
 
+    const reservedGlobals = new Set([
+      'console', 'process', 'Buffer', 'global', 'window', 'document',
+      'setTimeout', 'setInterval', 'clearTimeout', 'clearInterval',
+      'require', 'module', 'exports', '__dirname', '__filename'
+    ]);
+
     for (const libDir of libDirs) {
       if (fs.existsSync(libDir)) {
         await this.loadFilesFromDir(libDir, (name, mod) => {
           const Export = (mod as { default?: unknown }).default || mod;
-          this.context[this.toCamelCase(name)] = Export;
-          this.context[name] = Export;
+          const camelName = this.toCamelCase(name);
+          
+          if (!reservedGlobals.has(camelName)) {
+            this.context[camelName] = Export;
+          }
+          if (!reservedGlobals.has(name)) {
+            this.context[name] = Export;
+          }
           
           // Also add individual named exports to context for convenience
           // This allows calling seed(), clear(), etc. directly
           if (mod && typeof mod === 'object') {
             for (const [key, value] of Object.entries(mod)) {
-              if (key !== 'default' && !key.startsWith('_')) {
+              if (key !== 'default' && !key.startsWith('_') && !reservedGlobals.has(key) && value !== undefined) {
                 this.context[key] = value;
               }
             }
@@ -574,14 +614,21 @@ export class NextJSLoader {
       
       try {
         // Validate arguments for common patterns
-        const validatedArgs = args.map(arg => {
-          // Handle FormData-like objects
-          if (arg && typeof arg === 'object' && !(arg instanceof FormData)) {
-            // Convert plain objects to ensure they're serializable
-            return JSON.parse(JSON.stringify(arg));
-          }
-          return arg;
-        });
+        let validatedArgs;
+        try {
+          validatedArgs = args.map(arg => {
+            // Handle FormData-like objects
+            if (arg && typeof arg === 'object' && !(arg instanceof FormData)) {
+              // Convert plain objects to ensure they're serializable
+              return JSON.parse(JSON.stringify(arg));
+            }
+            return arg;
+          });
+        } catch (serializationError) {
+          console.warn(`⚠️  ${name}(): Argument serialization warning:`, (serializationError as Error).message);
+          // Continue with original args if serialization fails
+          validatedArgs = args;
+        }
 
         const result = await actionFn(...validatedArgs);
         const duration = Date.now() - startTime;
@@ -590,8 +637,40 @@ export class NextJSLoader {
         return result;
       } catch (error) {
         const duration = Date.now() - startTime;
-        const err = error as Error;
-        console.error(`❌ ${name}() failed after ${duration}ms:`, err.message);
+        
+        // Better error handling - handle various error types
+        let errorMessage: string;
+        let errorDetails: unknown;
+        
+        if (error instanceof Error) {
+          errorMessage = error.message;
+          errorDetails = error.stack;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        } else if (error && typeof error === 'object') {
+          // Handle plain objects thrown as errors
+          try {
+            errorMessage = JSON.stringify(error);
+          } catch {
+            errorMessage = '[Object with circular reference or non-serializable]';
+          }
+          errorDetails = error;
+        } else {
+          errorMessage = String(error);
+        }
+        
+        console.error(`❌ ${name}() failed after ${duration}ms:`, errorMessage);
+        if (errorDetails && errorDetails !== errorMessage) {
+          console.error(`   Details:`, errorDetails);
+        }
+        
+        // Re-throw as a proper Error if it was a plain object
+        if (error && typeof error === 'object' && !(error instanceof Error)) {
+          const wrappedError = new Error(`Server action failed: ${errorMessage}`);
+          (wrappedError as Error & { originalError: unknown }).originalError = error;
+          throw wrappedError;
+        }
+        
         throw error;
       }
     };

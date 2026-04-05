@@ -14,8 +14,9 @@ let connection: MySQLConnection | null = null;
 
 export async function connectMySQL(): Promise<MySQLConnection> {
   if (!connection) {
-    connection = await createMySQLConnectionFromEnv();
-    mysql = (connection as any).client;
+    connection = createMySQLConnectionFromEnv();
+    await connection.connect();
+    mysql = (connection as any).pool;
   }
   return connection;
 }
@@ -23,7 +24,7 @@ export async function connectMySQL(): Promise<MySQLConnection> {
 // Initialize tables
 export async function initMySQLTables(): Promise<void> {
   const conn = await connectMySQL();
-  const client = (conn as any).client;
+  const client = (conn as any).pool;
   
   await client.query(`
     CREATE TABLE IF NOT EXISTS orders (
@@ -55,7 +56,7 @@ export const OrderRepo = {
     items: Array<{ productId: number; quantity: number; price: number }>
   ): Promise<OrderWithItems> {
     const conn = await connectMySQL();
-    const client = (conn as any).client;
+    const client = (conn as any).pool;
     
     // Insert order
     const orderResult = await client.query(
@@ -63,7 +64,8 @@ export const OrderRepo = {
       [orderData.userId, orderData.total, 'pending']
     );
     
-    const orderId = orderResult.insertId;
+    const orderHeader = Array.isArray(orderResult) ? orderResult[0] : orderResult;
+    const orderId = orderHeader.insertId;
     
     // Insert items
     for (const item of items) {
@@ -88,7 +90,7 @@ export const OrderRepo = {
   
   async getOrders(): Promise<Order[]> {
     const conn = await connectMySQL();
-    const client = (conn as any).client;
+    const client = (conn as any).pool;
     
     const result = await client.query(
       'SELECT * FROM orders ORDER BY created_at DESC'
@@ -98,7 +100,7 @@ export const OrderRepo = {
   
   async getOrderById(id: number): Promise<OrderWithItems | null> {
     const conn = await connectMySQL();
-    const client = (conn as any).client;
+    const client = (conn as any).pool;
     
     const orders = await client.query(
       'SELECT * FROM orders WHERE id = ?',
@@ -117,7 +119,7 @@ export const OrderRepo = {
   
   async getOrdersByUser(userId: number): Promise<Order[]> {
     const conn = await connectMySQL();
-    const client = (conn as any).client;
+    const client = (conn as any).pool;
     
     return await client.query(
       'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC',
@@ -127,7 +129,7 @@ export const OrderRepo = {
   
   async updateOrderStatus(id: number, status: string): Promise<boolean> {
     const conn = await connectMySQL();
-    const client = (conn as any).client;
+    const client = (conn as any).pool;
     
     const result = await client.query(
       'UPDATE orders SET status = ? WHERE id = ?',

@@ -123,6 +123,13 @@ export class ConnectionManager implements DatabaseManager {
   }
 
   /**
+   * Get a connection by ID, returning undefined if not found
+   */
+  safeGet(id: string): DatabaseConnection | undefined {
+    return this.connections.get(id) || (this.originalConnections.get(id) as DatabaseConnection) || undefined;
+  }
+
+  /**
    * Get all connections
    */
   getAll(): DatabaseConnection[] {
@@ -312,14 +319,14 @@ export class ConnectionManager implements DatabaseManager {
       getDBStats: async () => {
         return this.getAllStatus();
       },
-      // Expose connections
-      mongo: this.get('mongodb'),
-      redis: this.get('redis'),
-      prisma: this.get('prisma'),
-      pg: this.get('postgresql'),
-      mysql: this.get('mysql'),
-      neo4j: this.get('neo4j'),
-      dynamo: this.get('dynamodb'),
+      // Expose connections (safe - returns undefined if not connected)
+      mongo: this.safeGet('mongodb'),
+      redis: this.safeGet('redis'),
+      prisma: this.safeGet('prisma'),
+      pg: this.safeGet('postgresql'),
+      mysql: this.safeGet('mysql'),
+      neo4j: this.safeGet('neo4j'),
+      dynamo: this.safeGet('dynamodb'),
     };
   }
 }

@@ -26,6 +26,14 @@ export class NestJSLoader {
   }
 
   /**
+   * Create a require function scoped to the project directory
+   */
+  private createProjectRequire(): NodeRequire {
+    const Module = require('module');
+    return Module.createRequire(path.join(this.rootPath, 'package.json'));
+  }
+
+  /**
    * Check if this is a NestJS project
    */
   static isNestJSProject(rootPath: string): boolean {
@@ -75,14 +83,14 @@ export class NestJSLoader {
     // Load entities first (so they're available even if bootstrap fails)
     await this.loadEntities();
     
-    // Load services from source
+    // Try to bootstrap the NestJS app first so services can be retrieved from the DI container
+    await this.bootstrapNestApp();
+    
+    // Load services from source (after bootstrap so we can get injected instances)
     await this.loadAllServices();
     
     // Load queues
     await this.loadQueues();
-    
-    // Try to bootstrap the NestJS app
-    await this.bootstrapNestApp();
     
     return this.context;
   }
@@ -91,7 +99,60 @@ export class NestJSLoader {
    * Bootstrap the NestJS application
    */
   async bootstrapNestApp(): Promise<void> {
-    // Find the main file
+    const projectRequire = this.createProjectRequire();
+
+    // Try to bootstrap directly from AppModule without calling app.listen()
+    const appModuleFiles = [
+      path.join(this.rootPath, 'src/app.module.ts'),
+      path.join(this.rootPath, 'src/app.module.js'),
+      path.join(this.rootPath, 'app.module.ts'),
+      path.join(this.rootPath, 'app.module.js'),
+    ];
+
+    for (const file of appModuleFiles) {
+      if (fs.existsSync(file)) {
+        try {
+          if (file.endsWith('.ts') && !require.extensions['.ts']) {
+            this.registerTypeScript();
+          }
+
+          try {
+            projectRequire('reflect-metadata');
+          } catch {
+            // ignore
+          }
+
+          const absolutePath = path.resolve(file);
+          delete require.cache[projectRequire.resolve(absolutePath)];
+          const appModule = projectRequire(absolutePath);
+          const AppModule = appModule.default || appModule.AppModule || Object.values(appModule)[0];
+
+          if (AppModule) {
+            const { NestFactory } = projectRequire('@nestjs/core');
+            const { ExpressAdapter } = projectRequire('@nestjs/platform-express');
+            const app = await NestFactory.create(AppModule, new ExpressAdapter(), { abortOnError: false });
+            await app.init();
+
+            this.nestApp = app;
+            this.context.app = app;
+            this.context.nestApp = app;
+
+            await this.extractProvidersFromApp();
+
+            const adapter = app.getHttpAdapter();
+            if (adapter && typeof adapter.getInstance === 'function') {
+              this.context.expressApp = adapter.getInstance();
+            }
+
+            return;
+          }
+        } catch (err) {
+          console.warn(`Warning: Could not bootstrap from ${file}: ${(err as Error).message}`);
+        }
+      }
+    }
+
+    // Fallback: find the main file
     const mainFiles = [
       this.config?.appEntry,
       'src/main.ts',
@@ -110,14 +171,19 @@ export class NestJSLoader {
       
       if (fs.existsSync(fullPath)) {
         try {
-          // For TypeScript, we might need ts-node/register
           if (fullPath.endsWith('.ts') && !require.extensions['.ts']) {
             this.registerTypeScript();
           }
+
+          try {
+            projectRequire('reflect-metadata');
+          } catch {
+            // ignore
+          }
           
           const absolutePath = path.resolve(fullPath);
-          delete require.cache[require.resolve(absolutePath)];
-          mainModule = require(absolutePath) as NestJSModule;
+          delete require.cache[projectRequire.resolve(absolutePath)];
+          mainModule = projectRequire(absolutePath) as NestJSModule;
           mainPath = fullPath;
           this.loadedFiles.push(fullPath);
           break;
@@ -134,16 +200,13 @@ export class NestJSLoader {
 
     // Try to get the AppModule and bootstrap
     try {
-      // Look for bootstrap function
       if (mainModule.bootstrap) {
-        // Call bootstrap but don't let it fully start
         const appPromise = mainModule.bootstrap();
         
-        // Give it a moment to initialize
         this.nestApp = await Promise.race([
           appPromise,
           new Promise<INestApplication>((_, reject) => 
-            setTimeout(() => reject(new Error('Bootstrap timeout')), 5000)
+            setTimeout(() => reject(new Error('Bootstrap timeout')), 15000)
           )
         ]).catch(() => null);
 
@@ -151,10 +214,8 @@ export class NestJSLoader {
           this.context.app = this.nestApp;
           this.context.nestApp = this.nestApp;
           
-          // Extract providers from the app
           await this.extractProvidersFromApp();
           
-          // Get HTTP adapter (Express instance)
           interface HttpAdapterHost {
             getInstance: () => unknown;
           }
@@ -183,9 +244,9 @@ export class NestJSLoader {
     if (!this.nestApp) return;
 
     try {
-      // Get the module ref to access providers
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { ModuleRef } = require('@nestjs/core');
+      // Get the module ref to access providers using the project's @nestjs/core
+      const projectRequire = this.createProjectRequire();
+      const { ModuleRef } = projectRequire('@nestjs/core');
       const moduleRef = this.nestApp.get(ModuleRef);
 
       // Get all controllers
@@ -195,6 +256,7 @@ export class NestJSLoader {
         const name = controller.name || controller.constructor?.name;
         if (name) {
           (this.context as Record<string, unknown>)[name] = ctrl;
+          (this.context as Record<string, unknown>)[this.toCamelCase(name)] = ctrl;
         }
       });
 
@@ -255,6 +317,7 @@ export class NestJSLoader {
    * Load services from a directory recursively
    */
   async loadServicesFromDir(dir: string): Promise<void> {
+    const projectRequire = this.createProjectRequire();
     const files = fs.readdirSync(dir);
 
     for (const file of files) {
@@ -280,8 +343,7 @@ export class NestJSLoader {
           }
 
           const absolutePath = path.resolve(fullPath);
-          delete require.cache[require.resolve(absolutePath)];
-          const module = require(absolutePath);
+          const module = projectRequire(absolutePath);
           
           // Get the service class
           const ServiceClass = module.default || 
@@ -334,6 +396,7 @@ export class NestJSLoader {
    * Load entities from the src directory
    */
   async loadEntities(): Promise<void> {
+    const projectRequire = this.createProjectRequire();
     const srcDir = path.join(this.rootPath, 'src');
     if (!fs.existsSync(srcDir)) return;
 
@@ -359,8 +422,7 @@ export class NestJSLoader {
             }
             
             const absolutePath = path.resolve(fullPath);
-            delete require.cache[require.resolve(absolutePath)];
-            const module = require(absolutePath);
+            const module = projectRequire(absolutePath);
             const Entity = module.default || Object.values(module)[0] || module;
             
             if (Entity && typeof Entity === 'function' && 'name' in Entity) {
@@ -381,6 +443,8 @@ export class NestJSLoader {
    * Load queue-related files
    */
   async loadQueues(): Promise<void> {
+    const projectRequire = this.createProjectRequire();
+    
     // Look for queue service/processor files
     const queueDirs = [
       path.join(this.rootPath, 'src/queues'),
@@ -412,8 +476,7 @@ export class NestJSLoader {
             }
 
             const absolutePath = path.resolve(fullPath);
-            delete require.cache[require.resolve(absolutePath)];
-            const module = require(absolutePath);
+            const module = projectRequire(absolutePath);
             
             // Get the exported class
             const ExportClass = module.default || 
@@ -440,6 +503,7 @@ export class NestJSLoader {
   async loadQueuesFromDir(dir: string): Promise<void> {
     if (!fs.existsSync(dir)) return;
     
+    const projectRequire = this.createProjectRequire();
     const files = fs.readdirSync(dir);
     for (const file of files) {
       const fullPath = path.join(dir, file);
@@ -458,8 +522,7 @@ export class NestJSLoader {
           }
 
           const absolutePath = path.resolve(fullPath);
-          delete require.cache[require.resolve(absolutePath)];
-          const module = require(absolutePath);
+          const module = projectRequire(absolutePath);
           
           const ExportClass = module.default || 
             Object.values(module).find((v): v is new () => unknown => typeof v === 'function') ||

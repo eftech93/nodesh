@@ -118,6 +118,11 @@ export class ExpressConsole {
     // Set up REPL context with app objects
     Object.assign(this.replServer.context, this.context);
     
+    // Merge custom context from config
+    if (this.options.context && Object.keys(this.options.context).length > 0) {
+      Object.assign(this.replServer.context, this.options.context);
+    }
+    
     // Add introspection methods for exploring objects
     addIntrospectionMethods(this.replServer.context);
 
@@ -200,6 +205,10 @@ export class ExpressConsole {
         items.push(chalk.gray(`... ${output.length - 100} more items`));
       }
       return `[ ${items.join(', ')} ]`;
+    }
+    
+    if (output instanceof Error) {
+      return output.stack || output.message || String(output);
     }
     
     if (typeof output === 'object') {

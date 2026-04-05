@@ -150,7 +150,7 @@ export async function seedUsers(options: {
  * ]);
  */
 export async function clear(
-  operations: Array<() => Promise<unknown>>,
+  operations: Array<() => Promise<unknown>> = [],
   options: {
     label?: string;
     confirm?: boolean;
