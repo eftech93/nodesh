@@ -29,12 +29,12 @@ npm run test:docker:up
 ```
 
 This starts all test databases defined in `docker-compose.test.yml`:
-- MongoDB (port 27017)
-- Redis (port 6379)
-- PostgreSQL (port 5432)
-- MySQL (port 3306)
-- Neo4j (port 7687)
-- DynamoDB Local (port 8000)
+- MongoDB (port 9000)
+- Redis (port 9001)
+- PostgreSQL (port 9002)
+- MySQL (port 9003)
+- Neo4j (HTTP port 9004, Bolt port 9005)
+- DynamoDB Local (port 9006)
 
 ### 2. Run Integration Tests
 
@@ -63,16 +63,36 @@ Test environment variables are defined in `.env.test`:
 
 ```bash
 # MongoDB
-MONGODB_URI=mongodb://admin:password@localhost:27017/nodesh_test?authSource=admin
+MONGODB_URI=mongodb://admin:password@localhost:9000/nodesh_test?authSource=admin
 
 # PostgreSQL
 PGHOST=localhost
-PGPORT=5432
+PGPORT=9002
 PGDATABASE=nodesh_test
 PGUSER=nodesh
 PGPASSWORD=nodesh_password
 
-# ... etc
+# MySQL
+MYSQL_HOST=localhost
+MYSQL_PORT=9003
+MYSQL_DATABASE=nodesh_test
+MYSQL_USER=nodesh
+MYSQL_PASSWORD=nodesh_password
+
+# Neo4j
+NEO4J_URI=bolt://localhost:9005
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=nodesh_password
+
+# DynamoDB
+DYNAMODB_ENDPOINT=http://localhost:9006
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=test
+AWS_SECRET_ACCESS_KEY=test
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=9001
 ```
 
 ## Writing Integration Tests
