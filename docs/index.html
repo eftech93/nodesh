@@ -1,197 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>NodeSH - Interactive Shell for Node.js</title>
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Interactive Shell for Node.js Applications">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/sidebar.min.css">
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/prismjs@1/themes/prism-tomorrow.min.css">
-  <style>
-    :root {
-      --theme-color: #00bcd4;
-      --theme-color-secondary: #0097a7;
-    }
-    
-    .cover-main img {
-      width: 120px;
-      margin-bottom: 1rem;
-    }
-    
-    .cover-main blockquote {
-      font-size: 1.2rem;
-    }
-    
-    .markdown-section code {
-      font-family: 'Fira Code', 'Roboto Mono', Monaco, Consolas, monospace;
-    }
-    
-    .markdown-section pre > code {
-      font-size: 0.9rem;
-      padding: 1rem;
-    }
-    
-    .tip {
-      background-color: #f3f5f7;
-      border-color: #00bcd4;
-    }
-    
-    .warn {
-      background-color: #fff7e6;
-      border-color: #faad14;
-    }
-    
-    .danger {
-      background-color: #fff1f0;
-      border-color: #ff4d4f;
-    }
-    
-    /* Custom badge styles */
-    .badge {
-      display: inline-block;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      margin-right: 0.5rem;
-    }
-    
-    .badge-primary {
-      background: #00bcd4;
-      color: white;
-    }
-    
-    .badge-secondary {
-      background: #6c757d;
-      color: white;
-    }
-    
-    .badge-success {
-      background: #28a745;
-      color: white;
-    }
-    
-    .badge-warning {
-      background: #ffc107;
-      color: black;
-    }
-    
-    .badge-danger {
-      background: #dc3545;
-      color: white;
-    }
-    
-    /* API Documentation Styles */
-    .api-method {
-      background: #f8f9fa;
-      border-left: 4px solid #00bcd4;
-      padding: 1rem;
-      margin: 1rem 0;
-      border-radius: 0 4px 4px 0;
-    }
-    
-    .api-method h4 {
-      margin-top: 0;
-      color: #00bcd4;
-    }
-    
-    .api-signature {
-      background: #2d2d2d;
-      color: #f8f8f2;
-      padding: 0.75rem 1rem;
-      border-radius: 4px;
-      font-family: 'Fira Code', monospace;
-      font-size: 0.9rem;
-      margin: 0.5rem 0;
-      overflow-x: auto;
-    }
-    
-    /* Test Results Table */
-    .test-results {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1rem 0;
-    }
-    
-    .test-results th,
-    .test-results td {
-      padding: 0.75rem;
-      text-align: left;
-      border-bottom: 1px solid #dee2e6;
-    }
-    
-    .test-results th {
-      background: #f8f9fa;
-      font-weight: 600;
-    }
-    
-    .test-pass {
-      color: #28a745;
-      font-weight: 600;
-    }
-    
-    .test-fail {
-      color: #dc3545;
-      font-weight: 600;
-    }
-    
-    .test-skip {
-      color: #ffc107;
-      font-weight: 600;
-    }
-    
-    /* Mermaid diagrams */
-    .mermaid {
-      text-align: center;
-      margin: 1.5rem 0;
-      background: #f8f9fa;
-      padding: 1rem;
-      border-radius: 8px;
-    }
-    
-    .mermaid svg {
-      max-width: 100%;
-      height: auto;
-    }
-    
-    /* Sidebar improvements */
-    .sidebar-nav li {
-      margin: 0.25rem 0;
-    }
-    
-    .sidebar-nav a {
-      padding: 0.5rem 1rem;
-    }
-    
-    .sidebar-nav .active {
-      background: rgba(0, 188, 212, 0.1);
-      border-right: 3px solid #00bcd4;
-    }
-    
-    /* Copy code button */
-    .docsify-copy-code-button {
-      background: #00bcd4 !important;
-      color: white !important;
-      border-radius: 3px;
-    }
-    
-    /* Search results */
-    .search-keyword {
-      color: #00bcd4;
-      font-weight: 600;
-    }
-  </style>
+  <link rel="stylesheet" href="https://eftech93.github.io/eftech93/slyte.css" />
+  <link rel="icon" type="image/png" href="https://eftech93.github.io/eftech93/_media/logo.png" />
 </head>
+
 <body>
-  <div id="app">Loading...</div>
+  <div id="app"></div>
+
+  <!-- Mermaid.js -->
+  <script src="//cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+
   <script>
-    // Mermaid configuration
-    window.mermaidConfig = {
+    mermaid.initialize({
+      startOnLoad: false,
       theme: 'default',
       securityLevel: 'loose',
-      startOnLoad: false,
+      logLevel: 'error',
       flowchart: {
         useMaxWidth: true,
         htmlLabels: true,
@@ -202,96 +33,62 @@
       },
       gantt: {
         useMaxWidth: true
+      },
+      pie: {
+        useMaxWidth: true
+      },
+      timeline: {
+        useMaxWidth: true
       }
-    };
+    });
+
+    let num = 0;
 
     window.$docsify = {
       name: 'NodeSH',
+      logo: 'https://eftech93.github.io/eftech93/_media/logo3.png',
+      themeColor: '#DEC647',
       repo: 'https://github.com/eftech93/nodesh',
-      homepage: 'README.md',
+      coverpage: '_coverpage.md',
       loadSidebar: true,
       loadNavbar: true,
       subMaxLevel: 3,
       auto2top: true,
-      coverpage: true,
-      onlyCover: false,
-      search: {
-        maxAge: 86400000,
-        paths: 'auto',
-        placeholder: 'Search documentation...',
-        noData: 'No results found',
-        depth: 6,
-        hideOtherSidebarContent: false
-      },
-      pagination: {
-        previousText: 'Previous',
-        nextText: 'Next',
-        crossChapter: true,
-        crossChapterText: true
-      },
-      copyCode: {
-        buttonText: 'Copy',
-        errorText: 'Error',
-        successText: 'Copied!'
-      },
       markdown: {
         renderer: {
-          code: function(code, lang) {
-            if (lang === 'mermaid') {
-              return '<div class="mermaid">' + code + '</div>';
+          code: function (code, lang) {
+            if (lang === "mermaid") {
+              return '<div class="mermaid" id="mermaid-' + num++ + '">' + code + '</div>';
             }
             return this.origin.code.apply(this, arguments);
           }
         }
       },
+      search: {
+        placeholder: 'Search',
+        noData: 'No results.',
+      },
       plugins: [
         function(hook, vm) {
-          hook.ready(function() {
-            // Initialize mermaid when docsify is ready
-            if (window.mermaid) {
-              mermaid.initialize(window.mermaidConfig);
-            }
-          });
-          
           hook.doneEach(function() {
-            // Render mermaid diagrams after each page load
-            if (window.mermaid) {
-              mermaid.init(undefined, document.querySelectorAll('.mermaid'));
-            }
+            mermaid.run({
+              querySelector: '.mermaid'
+            }).catch(function(err) {
+              console.error('Mermaid rendering error:', err);
+            });
           });
         }
       ]
-    };
+    }
   </script>
-  
-  <!-- Docsify -->
+
+  <!-- Docsify v4 -->
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
-  
-  <!-- Search -->
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
-  
-  <!-- Copy Code -->
-  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code@2"></script>
-  
-  <!-- Pagination -->
-  <script src="//cdn.jsdelivr.net/npm/docsify-pagination@2/dist/docsify-pagination.min.js"></script>
-  
-  <!-- Sidebar Collapse -->
-  <script src="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
-  
-  <!-- Mermaid for diagrams -->
-  <script src="//cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-  
-  <!-- Prism for syntax highlighting -->
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-typescript.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-json.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-yaml.min.js"></script>
-  
-  <!-- External Script -->
-  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/external-script.min.js"></script>
-  
-  <!-- Image Zoom -->
-  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
 </body>
+
 </html>
