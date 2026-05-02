@@ -17,7 +17,11 @@
     "typescript",
     "mongodb",
     "redis",
-    "bullmq"
+    "bullmq",
+    "developer-tools",
+    "framework-agnostic",
+    "database",
+    "orm"
   ],
   "homepage": "https://github.com/eftech93/nodesh#readme",
   "bugs": {

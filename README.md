@@ -1,11 +1,13 @@
 # NodeSH
 
+![Tests](https://github.com/eftech93/nodesh/actions/workflows/ci.yml/badge.svg)
+![npm](https://img.shields.io/npm/v/@eftech93/nodesh)
+![Node Version](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
+
 An interactive shell for Node.js applications. Works with **Express**, **NestJS**, and any Node.js framework. Load your entire app context—models, services, configs, databases—and interact with them in a REPL with autocompletion.
 
 Built with TypeScript for full type safety.
-
-![Node Version](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
 
 ## Features
 
@@ -41,6 +43,20 @@ Built with TypeScript for full type safety.
 
 ## Installation
 
+```bash
+# npm
+npm install @eftech93/nodesh
+
+# yarn
+yarn add @eftech93/nodesh
+
+# pnpm
+pnpm add @eftech93/nodesh
+
+# bun
+bun add @eftech93/nodesh
+```
+
 ### Global Install (Recommended)
 
 ```bash
@@ -65,6 +81,26 @@ npm install --save-dev @eftech93/nodesh
 ```
 
 ## Quick Start
+
+### Express Quickstart
+
+```javascript
+import { ExpressConsole } from '@eftech93/nodesh';
+
+const console = new ExpressConsole({ rootPath: __dirname });
+console.registerCommand('hello', () => 'Hello World!');
+await console.start();
+```
+
+### NestJS Quickstart
+
+```javascript
+import { NestJSConsole } from '@eftech93/nodesh';
+
+const console = new NestJSConsole({ appModule: AppModule });
+console.registerCommand('hello', () => 'Hello World!');
+await console.start();
+```
 
 ### 1. Start Your Infrastructure
 
